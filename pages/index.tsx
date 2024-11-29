@@ -47,6 +47,11 @@ export default function Home() {
             <p className="text-lg">
               Manage your services, bookings, and reviews here.
             </p>
+            <Link href="/Register">
+              <button className="mt-6 bg-[#ff8c00] text-white px-6 py-2 rounded hover:bg-orange-600 transition">
+                Go to Register Page
+              </button>
+            </Link>
             <button
               className="mt-6 bg-gray-300 text-black px-6 py-2 rounded hover:bg-gray-400"
               onClick={() => setRole(null)}
