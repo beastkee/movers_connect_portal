@@ -74,7 +74,7 @@ export default function Home() {
             <Link href="/Client">
               <button className="mt-6 bg-[#ff8c00] text-white px-6 py-2 rounded hover:bg-orange-600 transition">
                 Go to Client Page
-              </button>
+              </button>      
             </Link>
             <button
               className="mt-4 bg-gray-300 text-black px-6 py-2 rounded hover:bg-gray-400"
@@ -88,7 +88,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="bg-[#6a0dad] text-white text-center py-4">
-        <p>&copy; {new Date().getFullYear()} Mover Connection Portal. All rights reserved.</p>
+      <p>&copy; {new Date().getFullYear()} Mover Connection Portal. All rights reserved.</p>
       </footer>
     </div>
   );

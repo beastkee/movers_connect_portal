@@ -7,4 +7,4 @@ const Clientpage = () => {
         </div>
     )
 };
-export default Clientpage;
+export default Clientpage
