@@ -47,7 +47,7 @@ export default function Home() {
             <p className="text-lg">
               Manage your services, bookings, and reviews here.
             </p>
-            <Link href="/Register">
+            <Link href="/register">
               <button className="mt-6 bg-[#ff8c00] text-white px-6 py-2 rounded hover:bg-orange-600 transition">
                 Go to Register Page
               </button>
