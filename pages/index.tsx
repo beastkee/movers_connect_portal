@@ -76,7 +76,7 @@ export default function Home() {
               Manage your services, bookings, and reviews all in one place.
             </p>
             <div className="flex space-x-4 mt-6">
-              <Link href="/register">
+              <Link href="/Register">
                 <button className="bg-gradient-to-br from-[#ff8c00] to-[#f9a800] text-white px-6 py-3 rounded-full hover:scale-105 transform transition">
                   Go to Register Page
                 </button>
