@@ -7,5 +7,5 @@ const RegistrationPage = () => {
             <Register/>
         </div>
     )
-}
+};
 export default RegistrationPage;
