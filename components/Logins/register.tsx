@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useState } from "react";
-import { db } from "@/firebase/firebaseConfig"; // Firebase configuration file
-import { collection, addDoc } from "firebase/firestore";
+import { useRouter } from "next/router";
+import { db, auth } from "@/firebase/firebaseConfig";
+import { collection, doc, setDoc } from "firebase/firestore";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 
 type FormData = {
   companyName: string;
@@ -13,96 +14,144 @@ type FormData = {
 };
 
 const Register: React.FC = () => {
-  const { register, handleSubmit, reset } = useForm<FormData>();
+  const { register, handleSubmit, reset, formState } = useForm<FormData>();
+  const { errors, isSubmitting } = formState;
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
 
   const onSubmit = async (data: FormData) => {
     try {
-      // Add data to Firestore
-      const docRef = await addDoc(collection(db, "movers"), {
+      // Create the user in Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        data.email,
+        data.password
+      );
+      const user = userCredential.user;
+
+      // Save the user's details in Firestore
+      const userRef = doc(collection(db, "users", user.uid, "movers"));
+      await setDoc(userRef, {
         companyName: data.companyName,
         serviceArea: data.serviceArea,
         contactNumber: data.contactNumber,
         email: data.email,
-        password: data.password, // You may want to hash this before storing
         createdAt: new Date(),
       });
 
-      console.log("Document written with ID: ", docRef.id);
       setSuccess(true);
-      reset(); // Clear the form after submission
-    } catch (err) {
-      console.error("Error adding document: ", err);
-      setError("Registration failed. Please try again.");
+      reset();
+
+      // Redirect after a delay
+      setTimeout(() => router.push("/login"), 2000);
+    } catch (err: any) {
+      console.error("Registration error:", err);
+      setError(err.message || "Registration failed. Please try again.");
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-orange-500 flex items-center justify-center">
-      <div className="bg-white text-gray-800 rounded-lg shadow-lg p-8 w-full max-w-md">
-        <h2 className="text-2xl font-bold text-center text-purple-700 mb-4">Register as a Mover</h2>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="mb-4">
-            <label className="block font-bold mb-1"> Company Name </label>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-black flex items-center justify-center">
+      <div className="relative w-full max-w-lg mx-auto bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-800 rounded-3xl shadow-lg p-10">
+        <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 w-20 h-20 bg-gradient-to-br from-white to-gray-200 backdrop-blur-md rounded-full shadow-lg flex items-center justify-center text-2xl font-bold text-purple-800">
+          🚚
+        </div>
+        <h2 className="text-3xl font-extrabold text-center text-white mb-8">
+          Register as a Mover
+        </h2>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {/** Company Name Field */}
+          <div>
             <input
               type="text"
-              {...register("companyName", { required: true })}
-              placeholder="Enter your company name"
-              className="w-full p-2 border rounded"
+              {...register("companyName", { required: "Company name is required" })}
+              placeholder="Company Name"
+              className="w-full px-6 py-3 bg-transparent border border-purple-400 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none text-white placeholder-gray-400"
             />
+            {errors.companyName && (
+              <p className="text-red-500 text-sm mt-1">{errors.companyName.message}</p>
+            )}
           </div>
-          <div className="mb-4">
-            <label className="block font-bold mb-1">Service Area</label>
+
+          {/** Service Area Field */}
+          <div>
             <input
               type="text"
-              {...register("serviceArea", { required: true })}
-              placeholder="Enter your service area"
-              className="w-full p-2 border rounded"
+              {...register("serviceArea", { required: "Service area is required" })}
+              placeholder="Service Area"
+              className="w-full px-6 py-3 bg-transparent border border-purple-400 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none text-white placeholder-gray-400"
             />
+            {errors.serviceArea && (
+              <p className="text-red-500 text-sm mt-1">{errors.serviceArea.message}</p>
+            )}
           </div>
-          <div className="mb-4">
-            <label className="block font-bold mb-1">Contact Number</label>
+
+          {/** Contact Number Field */}
+          <div>
             <input
               type="text"
-              {...register("contactNumber", { required: true })}
-              placeholder="Enter your contact number"
-              className="w-full p-2 border rounded"
+              {...register("contactNumber", { required: "Contact number is required" })}
+              placeholder="Contact Number"
+              className="w-full px-6 py-3 bg-transparent border border-purple-400 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none text-white placeholder-gray-400"
             />
+            {errors.contactNumber && (
+              <p className="text-red-500 text-sm mt-1">{errors.contactNumber.message}</p>
+            )}
           </div>
-          <div className="mb-4">
-            <label className="block font-bold mb-1">Email Address</label>
+
+          {/** Email Field */}
+          <div>
             <input
               type="email"
-              {...register("email", { required: true })}
-              placeholder="Enter your email address"
-              className="w-full p-2 border rounded"
+              {...register("email", { required: "Email is required" })}
+              placeholder="Email Address"
+              className="w-full px-6 py-3 bg-transparent border border-purple-400 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none text-white placeholder-gray-400"
             />
+            {errors.email && (
+              <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+            )}
           </div>
-          <div className="mb-4">
-            <label className="block font-bold mb-1">Create a Password</label>
+
+          {/** Password Field */}
+          <div className="relative">
             <input
-              type="password"
-              {...register("password", { required: true })}
-              placeholder="Enter a strong password"
-              className="w-full p-2 border rounded"
+              type={showPassword ? "text" : "password"}
+              {...register("password", { required: "Password is required" })}
+              placeholder="Create a Password"
+              className="w-full px-6 py-3 bg-transparent border border-purple-400 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none text-white placeholder-gray-400"
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute inset-y-0 right-4 text-purple-300 hover:text-purple-500 focus:outline-none"
+              aria-label="Toggle Password Visibility"
+            >
+              {showPassword ? "🙈" : "👁️"}
+            </button>
+            {errors.password && (
+              <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
+            )}
           </div>
+
+          {/** Submit Button */}
           <button
             type="submit"
-            className="bg-gradient-to-r from-orange-500 to-purple-700 text-white py-2 px-4 rounded-lg hover:scale-105 transition-transform"
+            className="w-full py-3 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-xl font-bold shadow-lg hover:opacity-90 focus:ring-2 focus:ring-indigo-400 transition-opacity"
+            disabled={isSubmitting}
           >
-            Register
+            {isSubmitting ? "Registering..." : "Register"}
           </button>
         </form>
 
         {success && (
-          <div className="mt-4 bg-green-100 text-green-700 p-3 rounded">
-            Registration Successful! Thank you for registering.
+          <div className="mt-6 bg-green-100 text-green-700 p-3 rounded text-center">
+            Registration Successful! Redirecting to login...
           </div>
         )}
         {error && (
-          <div className="mt-4 bg-red-100 text-red-700 p-3 rounded">
+          <div className="mt-6 bg-red-100 text-red-700 p-3 rounded text-center">
             {error}
           </div>
         )}

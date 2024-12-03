@@ -1,95 +1,116 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import React, { useState } from "react";
+import { useRouter } from "next/router";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/firebase/firebaseConfig"; // Import your Firebase auth instance
+import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "@/firebase/firebaseConfig"; // Import your Firestore db instance
 
-const LoginRegister: React.FC = () => {
-  const [isRegister, setIsRegister] = useState(false);
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    role: 'client', // Default role for registration
-  });
+const LoginPage = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const router = useRouter();
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData((prevData) => ({ ...prevData, [name]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+    setError("");
+
     try {
-      const url = isRegister ? '/api/register' : '/api/login';
-      const response = await axios.post(url, formData);
-      alert(response.data.message || (isRegister ? 'Registration successful!' : 'Login successful!'));
-    } catch (error: any) {
-      alert(error.response?.data?.message || 'An error occurred!');
+      // Sign in the user using Firebase Authentication
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      // Query both the 'movers' and 'clients' subcollections for the user
+      const moversRef = collection(db, "users", user.uid, "movers");
+      const clientsRef = collection(db, "users", user.uid, "clients");
+
+      const moverQuery = query(moversRef, where("email", "==", email));
+      const clientQuery = query(clientsRef, where("email", "==", email));
+
+      const [moverSnapshot, clientSnapshot] = await Promise.all([
+        getDocs(moverQuery),
+        getDocs(clientQuery),
+      ]);
+
+      if (!moverSnapshot.empty) {
+        // User found in the 'movers' subcollection
+        router.push("/mover"); // Redirect to mover dashboard
+      } else if (!clientSnapshot.empty) {
+        // User found in the 'clients' subcollection
+        router.push("/dashboardclient"); // Redirect to client dashboard
+      } else {
+        setError("User not found in either movers or clients.");
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to log in. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: 'auto', padding: '20px', textAlign: 'center' }}>
-      <h1>{isRegister ? 'Sign Up' : 'Login'}</h1>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={formData.email}
-          onChange={handleInputChange}
-          required
-          style={{ display: 'block', margin: '10px auto', padding: '10px', width: '100%' }}
-        />
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={formData.password}
-          onChange={handleInputChange}
-          required
-          style={{ display: 'block', margin: '10px auto', padding: '10px', width: '100%' }}
-        />
-        {isRegister && (
-          <select
-            name="role"
-            value={formData.role}
-            onChange={handleInputChange}
-            style={{ display: 'block', margin: '10px auto', padding: '10px', width: '100%' }}
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-800 to-gray-900 text-white">
+      <div className="w-full max-w-md p-8 bg-opacity-80 bg-gray-800 rounded-lg shadow-lg">
+        <h1 className="text-3xl font-extrabold text-center mb-6">Welcome Back</h1>
+        <p className="text-gray-400 text-center mb-8">
+          Log in to your account to access your dashboard.
+        </p>
+        <form onSubmit={handleLogin} className="space-y-6">
+          {error && (
+            <p className="text-red-500 text-center font-medium">{error}</p>
+          )}
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium">
+              Email
+            </label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full mt-2 p-3 bg-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium">
+              Password
+            </label>
+            <input
+              type="password"
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full mt-2 p-3 bg-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+            />
+          </div>
+          <button
+            type="submit"
+            className={`w-full py-3 text-lg font-semibold rounded-lg transition ${
+              loading
+                ? "bg-gray-500 cursor-not-allowed"
+                : "bg-purple-600 hover:bg-purple-700"
+            }`}
+            disabled={loading}
           >
-            <option value="client">Client</option>
-            <option value="mover">Mover</option>
-          </select>
-        )}
-        <button
-          type="submit"
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#007bff',
-            color: '#fff',
-            border: 'none',
-            cursor: 'pointer',
-          }}
-        >
-          {isRegister ? 'Sign Up' : 'Login'}
-        </button>
-      </form>
-      <p style={{ marginTop: '20px' }}>
-        {isRegister ? (
-          <>
-            Already have an account?{' '}
-            <button onClick={() => setIsRegister(false)} style={{ color: '#007bff', cursor: 'pointer', background: 'none', border: 'none' }}>
-              Login
-            </button>
-          </>
-        ) : (
-          <>
-            Don't have an account?{' '}
-            <button onClick={() => setIsRegister(true)} style={{ color: '#007bff', cursor: 'pointer', background: 'none', border: 'none' }}>
-              Sign Up
-            </button>
-          </>
-        )}
-      </p>
+            {loading ? "Logging in..." : "Log In"}
+          </button>
+        </form>
+        <p className="text-center text-gray-400 mt-6">
+          Don't have an account?{" "}
+          <a
+            href="/roles"
+            className="text-purple-400 hover:underline hover:text-purple-300"
+          >
+            Sign up
+          </a>
+        </p>
+      </div>
     </div>
   );
 };
 
-export default LoginRegister;
+export default LoginPage;

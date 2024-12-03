@@ -1,14 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
+import { useRouter } from "next/router";
+import { doc, setDoc } from "firebase/firestore";
+import { auth, db } from "@/firebase/firebaseConfig"; // Ensure Firebase is correctly configured
+import { createUserWithEmailAndPassword } from "firebase/auth";
 
 const ClientRegistration: React.FC = () => {
   const [formData, setFormData] = useState({
-    name: '',
-    number: '',
-    email: '',
-    password: '',
+    name: "",
+    number: "",
+    email: "",
+    password: "",
   });
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -19,83 +25,117 @@ const ClientRegistration: React.FC = () => {
     e.preventDefault();
     setMessage(null);
     setError(null);
+    setLoading(true);
 
     try {
-      const response = await fetch('/api/register-client', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+      // Firebase Authentication: Create user
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        formData.email,
+        formData.password
+      );
+      const user = userCredential.user;
+
+      // Firebase Firestore: Store user data under the 'clients' subcollection of the 'users' collection
+      await setDoc(doc(db, "users", user.uid, "clients", user.uid), {
+        name: formData.name,
+        number: formData.number,
+        email: formData.email,
+        createdAt: new Date(),
       });
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
-      }
-
-      setMessage('Registration successful!');
-      setFormData({ name: '', number: '', email: '', password: '' }); // Reset form
+      setMessage("Registration successful!");
+      setFormData({ name: "", number: "", email: "", password: "" }); // Reset form
+      router.push("/login"); // Redirect to login page
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || "Registration failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: 'auto', padding: '20px', textAlign: 'center' }}>
-      <h1>Client Registration</h1>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          name="name"
-          placeholder="Full Name"
-          value={formData.name}
-          onChange={handleInputChange}
-          required
-          style={{ display: 'block', margin: '10px auto', padding: '10px', width: '100%' }}
-        />
-        <input
-          type="text"
-          name="number"
-          placeholder="Phone Number"
-          value={formData.number}
-          onChange={handleInputChange}
-          required
-          style={{ display: 'block', margin: '10px auto', padding: '10px', width: '100%' }}
-        />
-        <input
-          type="email"
-          name="email"
-          placeholder="Email Address"
-          value={formData.email}
-          onChange={handleInputChange}
-          required
-          style={{ display: 'block', margin: '10px auto', padding: '10px', width: '100%' }}
-        />
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={formData.password}
-          onChange={handleInputChange}
-          required
-          style={{ display: 'block', margin: '10px auto', padding: '10px', width: '100%' }}
-        />
-        <button
-          type="submit"
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#007bff',
-            color: '#fff',
-            border: 'none',
-            cursor: 'pointer',
-          }}
-        >
-          Register
-        </button>
-      </form>
-      {message && <p style={{ color: 'green', marginTop: '20px' }}>{message}</p>}
-      {error && <p style={{ color: 'red', marginTop: '20px' }}>{error}</p>}
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-800 to-gray-900 text-white">
+      <div className="w-full max-w-md p-8 bg-opacity-80 bg-gray-800 rounded-lg shadow-lg">
+        <h1 className="text-3xl font-extrabold text-center mb-6">
+          Register as a Client
+        </h1>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {error && (
+            <p className="text-red-500 text-center font-medium">{error}</p>
+          )}
+          {message && (
+            <p className="text-green-500 text-center font-medium">{message}</p>
+          )}
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium">
+              Full Name
+            </label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              required
+              className="w-full mt-2 p-3 bg-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label htmlFor="number" className="block text-sm font-medium">
+              Phone Number
+            </label>
+            <input
+              type="text"
+              id="number"
+              name="number"
+              value={formData.number}
+              onChange={handleInputChange}
+              required
+              className="w-full mt-2 p-3 bg-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium">
+              Email Address
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              required
+              className="w-full mt-2 p-3 bg-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium">
+              Password
+            </label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              required
+              className="w-full mt-2 p-3 bg-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+            />
+          </div>
+          <button
+            type="submit"
+            className={`w-full py-3 text-lg font-semibold rounded-lg transition ${
+              loading
+                ? "bg-gray-500 cursor-not-allowed"
+                : "bg-purple-600 hover:bg-purple-700"
+            }`}
+            disabled={loading}
+          >
+            {loading ? "Registering..." : "Register"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 };
