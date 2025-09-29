@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/router";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/firebase/firebaseConfig"; // Ensure Firebase is correctly configured
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 
 const ClientRegistration: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -36,6 +36,9 @@ const ClientRegistration: React.FC = () => {
       );
       const user = userCredential.user;
 
+  // Send email verification
+  await sendEmailVerification(user);
+
       // Firebase Firestore: Store user data under the 'clients' subcollection of the 'users' collection
       await setDoc(doc(db, "users", user.uid, "clients", user.uid), {
         name: formData.name,
@@ -44,9 +47,9 @@ const ClientRegistration: React.FC = () => {
         createdAt: new Date(),
       });
 
-      setMessage("Registration successful!");
+      setMessage("Registration successful! Please check your email and verify your account before logging in.");
       setFormData({ name: "", number: "", email: "", password: "" }); // Reset form
-      router.push("/login"); // Redirect to login page
+      setTimeout(() => router.push("/login"), 4000); // Redirect to login page after delay
     } catch (err: any) {
       setError(err.message || "Registration failed. Please try again.");
     } finally {

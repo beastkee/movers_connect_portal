@@ -21,7 +21,14 @@ const LoginPage = () => {
       // Sign in the user using Firebase Authentication
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      
+
+      // Require email verification
+      if (!user.emailVerified) {
+        setError("Please verify your email before logging in. Check your inbox for a verification link.");
+        setLoading(false);
+        return;
+      }
+
       // Query both the 'movers' and 'clients' subcollections for the user
       const moversRef = collection(db, "users", user.uid, "movers");
       const clientsRef = collection(db, "users", user.uid, "clients");

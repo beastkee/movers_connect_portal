@@ -1,4 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { db } from "@/firebase/firebaseConfig";
+import { collectionGroup, onSnapshot, QuerySnapshot, DocumentData, doc, getDoc, collection, query, where, onSnapshot as onSnapshot2, updateDoc } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
 interface ClientRequest {
   id: string;
@@ -10,33 +13,37 @@ interface ClientRequest {
 }
 
 const MoverDashboard: React.FC = () => {
-  const [requests, setRequests] = useState<ClientRequest[]>([
-    // Example data - replace this with Firebase data in the future
-    {
-      id: "1",
-      name: "Alice Johnson",
-      address: "123 Main Street",
-      contact: "123-456-7890",
-      description: "Need help moving furniture to a new apartment.",
-      date: "2024-12-05",
-    },
-    {
-      id: "2",
-      name: "Bob Smith",
-      address: "456 Oak Lane",
-      contact: "987-654-3210",
-      description: "Relocating a small office.",
-      date: "2024-12-10",
-    },
-    {
-      id: "3",
-      name: "Eve Martinez",
-      address: "789 Pine Road",
-      contact: "456-123-7890",
-      description: "Assistance with packing and loading for a house move.",
-      date: "2024-12-08",
-    },
-  ]);
+  const [requests, setRequests] = useState<ClientRequest[]>([]);
+  const [showCreds, setShowCreds] = useState(false);
+  const [credentials, setCredentials] = useState<string[]>([]);
+  const [loadingCreds, setLoadingCreds] = useState(false);
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [showBookings, setShowBookings] = useState(false);
+  const auth = typeof window !== "undefined" ? getAuth() : null;
+  const user = auth?.currentUser;
+  // Fetch bookings for this mover
+  useEffect(() => {
+    if (!user) return;
+    const q = query(collection(db, "bookings"), where("moverId", "==", user.uid));
+    const unsub = onSnapshot2(q, (snapshot: any) => {
+      setBookings(snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() })));
+    });
+    return () => unsub();
+  }, [user]);
+
+
+  useEffect(() => {
+    // Listen for all clients in nested subcollections using collectionGroup
+    const unsub = onSnapshot(collectionGroup(db, "clients"), (snapshot: any) => {
+      const reqs: ClientRequest[] = snapshot.docs.map((doc: any) => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setRequests(reqs);
+    });
+    return () => unsub();
+  }, []);
+
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   const handleSearch = (query: string) => {
@@ -47,9 +54,100 @@ const MoverDashboard: React.FC = () => {
     request.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Fetch mover credentials from Firestore
+  const fetchCredentials = async () => {
+    if (!user) return;
+    setLoadingCreds(true);
+    try {
+      const docRef = doc(db, "users", user.uid, "movers", user.uid);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setCredentials(data.credentials || []);
+      } else {
+        setCredentials([]);
+      }
+    } catch {
+      setCredentials([]);
+    } finally {
+      setLoadingCreds(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-800 via-gray-900 to-black text-white p-6">
       <h1 className="text-4xl font-extrabold text-center mb-10">Mover Dashboard</h1>
+
+      {/* Show Bookings Button */}
+      <div className="flex justify-end mb-4 gap-4">
+        <button
+          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-semibold"
+          onClick={() => setShowBookings((prev) => !prev)}
+        >
+          {showBookings ? "Hide My Bookings" : "Show My Bookings"}
+        </button>
+      </div>
+      {showBookings && (
+        <div className="mb-8 bg-white/10 p-4 rounded-lg">
+          <h2 className="text-xl font-bold mb-2">My Bookings</h2>
+          {bookings.length === 0 ? (
+            <p>No bookings yet.</p>
+          ) : (
+            <ul className="list-disc ml-6">
+              {bookings.map((b, idx) => (
+                <li key={idx} className="mb-2">
+                  <span className="font-semibold">{b.clientEmail}</span> — {b.date} {b.time} (<span className="capitalize">{b.status}</span>)
+                  {b.status === "pending" && (
+                    <>
+                      <button
+                        className="ml-4 bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded"
+                        onClick={async () => {
+                          await updateDoc(doc(db, "bookings", b.id), { status: "accepted" });
+                        }}
+                      >Accept</button>
+                      <button
+                        className="ml-2 bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded"
+                        onClick={async () => {
+                          await updateDoc(doc(db, "bookings", b.id), { status: "declined" });
+                        }}
+                      >Decline</button>
+                    </>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+      <div className="flex justify-end mb-4">
+        <button
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold"
+          onClick={() => {
+            setShowCreds((prev) => !prev);
+            if (!showCreds) fetchCredentials();
+          }}
+        >
+          {showCreds ? "Hide My Credentials" : "Show My Credentials"}
+        </button>
+      </div>
+      {showCreds && (
+        <div className="mb-8 bg-white/10 p-4 rounded-lg">
+          <h2 className="text-xl font-bold mb-2">My Uploaded Credentials</h2>
+          {loadingCreds ? (
+            <p>Loading...</p>
+          ) : credentials.length === 0 ? (
+            <p>No credentials uploaded.</p>
+          ) : (
+            <ul className="list-disc ml-6">
+              {credentials.map((url, idx) => (
+                <li key={idx}>
+                  <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-300 underline">Document {idx + 1}</a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       {/* Search Bar */}
       <div className="mb-8">
