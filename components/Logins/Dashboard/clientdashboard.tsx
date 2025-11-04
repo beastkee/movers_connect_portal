@@ -89,92 +89,124 @@ const ClientDashboard: React.FC = () => {
   // My Bookings & Review Section
   const renderMyBookings = () => (
     <section className="mb-12">
-      <h2 className="text-2xl font-semibold mb-4">My Bookings</h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-3xl font-bold">📋 My Bookings</h2>
+        <span className="bg-purple-500/20 text-purple-300 px-4 py-2 rounded-full text-sm font-semibold">
+          {myBookings.length} Total
+        </span>
+      </div>
       {myBookings.length === 0 ? (
-        <p className="text-gray-400">No bookings yet.</p>
+        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-12 text-center">
+          <p className="text-gray-400 text-lg">No bookings yet. Start by booking a mover below!</p>
+        </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white/10 text-white rounded-lg">
-            <thead>
-              <tr>
-                <th className="px-4 py-2">Mover</th>
-                <th className="px-4 py-2">Date</th>
-                <th className="px-4 py-2">Time</th>
-                <th className="px-4 py-2">Status</th>
-                <th className="px-4 py-2">Review</th>
-              </tr>
-            </thead>
-            <tbody>
-              {myBookings.map((b) => (
-                <tr key={b.id} className="border-b border-white/20">
-                  <td className="px-4 py-2">{b.moverName}</td>
-                  <td className="px-4 py-2">{b.date}</td>
-                  <td className="px-4 py-2">{b.time}</td>
-                  <td className="px-4 py-2 capitalize">{b.status}</td>
-                  <td className="px-4 py-2">
-                    {isBookingReviewable(b) ? (
-                      <button
-                        className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded"
-                        onClick={() => setReviewModal({ open: true, booking: b })}
-                      >
-                        Leave Review
-                      </button>
-                    ) : (
-                      <span className="text-gray-400 text-sm">{b.status === "accepted" ? "Reviewed" : "-"}</span>
-                    )}
-                  </td>
+        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden shadow-xl">
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead className="bg-white/5">
+                <tr>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-purple-300">Mover</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-purple-300">Date</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-purple-300">Time</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-purple-300">Status</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-purple-300">Review</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-white/10">
+                {myBookings.map((b) => (
+                  <tr key={b.id} className="hover:bg-white/5 transition-colors">
+                    <td className="px-6 py-4 font-medium">{b.moverName}</td>
+                    <td className="px-6 py-4 text-gray-300">{b.date}</td>
+                    <td className="px-6 py-4 text-gray-300">{b.time}</td>
+                    <td className="px-6 py-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        b.status === "accepted" ? "bg-green-500/20 text-green-300" :
+                        b.status === "pending" ? "bg-yellow-500/20 text-yellow-300" :
+                        "bg-red-500/20 text-red-300"
+                      }`}>
+                        {b.status.charAt(0).toUpperCase() + b.status.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      {isBookingReviewable(b) ? (
+                        <button
+                          className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-4 py-2 rounded-lg font-semibold transition-all shadow-lg hover:shadow-xl"
+                          onClick={() => setReviewModal({ open: true, booking: b })}
+                        >
+                          Leave Review
+                        </button>
+                      ) : (
+                        <span className="text-gray-400 text-sm">{b.status === "accepted" ? "✓ Reviewed" : "-"}</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </section>
   );
   // Review Modal
   const renderReviewModal = () => reviewModal.open && reviewModal.booking ? (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-      <div className="bg-white text-black p-8 rounded-lg shadow-lg w-full max-w-md relative">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-gradient-to-br from-gray-900 to-black border border-white/20 text-white p-8 rounded-2xl shadow-2xl w-full max-w-md relative">
         <button
-          className="absolute top-2 right-2 text-gray-500 hover:text-black"
+          className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl font-bold transition-colors"
           onClick={() => setReviewModal({ open: false, booking: null })}
         >
-          &times;
+          ×
         </button>
-        <h2 className="text-2xl font-bold mb-4">Review {reviewModal.booking.moverName}</h2>
-        <form onSubmit={handleReviewSubmit} className="space-y-4">
+        <div className="text-center mb-6">
+          <div className="bg-purple-500/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-4xl">⭐</span>
+          </div>
+          <h2 className="text-2xl font-bold">Review {reviewModal.booking.moverName}</h2>
+          <p className="text-gray-400 mt-2">Share your experience</p>
+        </div>
+        <form onSubmit={handleReviewSubmit} className="space-y-5">
           <div>
-            <label className="block font-medium">Rating</label>
+            <label className="block font-semibold mb-2 text-purple-300">⭐ Rating</label>
             <select
               value={reviewRating}
               onChange={e => setReviewRating(Number(e.target.value))}
-              className="w-full border rounded px-3 py-2"
+              className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-purple-500 focus:outline-none"
               required
             >
               {[5,4,3,2,1].map(r => (
-                <option key={r} value={r}>{r} Star{r > 1 ? "s" : ""}</option>
+                <option key={r} value={r} className="bg-gray-900">{"⭐".repeat(r)} {r} Star{r > 1 ? "s" : ""}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block font-medium">Comment</label>
+            <label className="block font-semibold mb-2 text-purple-300">💬 Comment</label>
             <textarea
               value={reviewComment}
               onChange={e => setReviewComment(e.target.value)}
-              className="w-full border rounded px-3 py-2"
-              rows={3}
+              className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-purple-500 focus:outline-none resize-none"
+              rows={4}
+              placeholder="Share your thoughts about this mover..."
               required
             />
           </div>
           <button
             type="submit"
-            className="w-full bg-purple-600 text-white py-2 rounded font-semibold"
+            className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={reviewSubmitting}
           >
-            {reviewSubmitting ? "Submitting..." : "Submit Review"}
+            {reviewSubmitting ? "Submitting..." : "✓ Submit Review"}
           </button>
-          {reviewSuccess && <div className="text-green-600 mt-2">{reviewSuccess}</div>}
-          {reviewError && <div className="text-red-600 mt-2">{reviewError}</div>}
+          {reviewSuccess && (
+            <div className="p-3 bg-green-500/20 border border-green-500/50 rounded-lg text-center text-green-300">
+              {reviewSuccess}
+            </div>
+          )}
+          {reviewError && (
+            <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-center text-red-300">
+              {reviewError}
+            </div>
+          )}
         </form>
       </div>
     </div>
@@ -235,7 +267,11 @@ const ClientDashboard: React.FC = () => {
     );
 
     if (filteredMovers.length === 0) {
-      return <p className="text-gray-400">No movers in this category.</p>;
+      return (
+        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-12 text-center">
+          <p className="text-gray-400 text-lg">No movers in this category.</p>
+        </div>
+      );
     }
 
     return (
@@ -243,29 +279,37 @@ const ClientDashboard: React.FC = () => {
         {filteredMovers.map((mover) => (
           <div
             key={mover.id}
-            className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg p-5 shadow-lg hover:scale-105 transform transition-all duration-300"
+            className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-lg border border-white/20 rounded-xl p-6 shadow-xl hover:shadow-2xl hover:scale-105 hover:border-purple-500/50 transform transition-all duration-300"
           >
-            <h3 className="text-xl font-bold text-white">{mover.name}</h3>
-            <p className="text-sm text-gray-300">
-              <strong>Contact:</strong> {mover.contact}
-            </p>
-            <p
-              className={`text-sm mt-2 ${
-                status === "available"
-                  ? "text-green-400"
-                  : status === "accepted"
-                  ? "text-blue-400"
-                  : "text-red-400"
-              }`}
-            >
-              Status: {status.charAt(0).toUpperCase() + status.slice(1)}
-            </p>
+            <div className="flex items-start justify-between mb-4">
+              <div className="bg-purple-500/20 w-12 h-12 rounded-full flex items-center justify-center">
+                <span className="text-2xl">🚚</span>
+              </div>
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                  status === "available"
+                    ? "bg-green-500/20 text-green-300"
+                    : status === "accepted"
+                    ? "bg-blue-500/20 text-blue-300"
+                    : "bg-red-500/20 text-red-300"
+                }`}
+              >
+                {status.charAt(0).toUpperCase() + status.slice(1)}
+              </span>
+            </div>
+            <h3 className="text-xl font-bold text-white mb-3">{mover.name}</h3>
+            <div className="space-y-2 mb-4">
+              <p className="text-sm text-gray-300 flex items-center gap-2">
+                <span className="text-purple-400">📞</span>
+                <strong>Contact:</strong> {mover.contact}
+              </p>
+            </div>
             {status === "available" && (
               <button
-                className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold"
+                className="w-full mt-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-3 rounded-lg font-semibold transition-all shadow-lg hover:shadow-xl"
                 onClick={() => handleBookClick(mover)}
               >
-                Book This Mover
+                📅 Book This Mover
               </button>
             )}
           </div>
@@ -275,80 +319,129 @@ const ClientDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-black text-white p-6">
-      <h1 className="text-4xl font-extrabold text-center mb-10">Client Dashboard</h1>
-
-      <div className="mb-8">
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => handleSearch(e.target.value)}
-          placeholder="Search movers by name..."
-          className="w-full sm:w-1/2 px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:outline-none"
-        />
+    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-black text-white">
+      {/* Header Section */}
+      <div className="bg-gradient-to-r from-purple-800/50 to-indigo-800/50 backdrop-blur-sm border-b border-white/10 shadow-xl">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-extrabold mb-2">Client Dashboard</h1>
+              <p className="text-purple-200">Welcome back! Find and book professional movers</p>
+            </div>
+            <div className="hidden md:flex items-center gap-4">
+              <div className="text-right">
+                <p className="text-sm text-purple-200">Logged in as</p>
+                <p className="font-semibold">{user?.email}</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Search Bar */}
+        <div className="mb-8">
+          <div className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              placeholder="🔍 Search movers by name..."
+              className="w-full px-6 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-300 focus:ring-2 focus:ring-purple-500 focus:outline-none backdrop-blur-sm shadow-lg"
+            />
+          </div>
+        </div>
 
       {/* Booking Modal */}
       {showBooking && selectedMover && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white text-black p-8 rounded-lg shadow-lg w-full max-w-md relative">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-gray-900 to-black border border-white/20 text-white p-8 rounded-2xl shadow-2xl w-full max-w-md relative">
             <button
-              className="absolute top-2 right-2 text-gray-500 hover:text-black"
+              className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl font-bold transition-colors"
               onClick={() => setShowBooking(false)}
             >
-              &times;
+              ×
             </button>
-            <h2 className="text-2xl font-bold mb-4">Book {selectedMover.name}</h2>
-            <form onSubmit={handleBooking} className="space-y-4">
+            <div className="text-center mb-6">
+              <div className="bg-purple-500/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-4xl">📅</span>
+              </div>
+              <h2 className="text-2xl font-bold">Book {selectedMover.name}</h2>
+              <p className="text-gray-400 mt-2">Schedule your moving service</p>
+            </div>
+            <form onSubmit={handleBooking} className="space-y-5">
               <div>
-                <label className="block font-medium">Date</label>
+                <label className="block font-semibold mb-2 text-purple-300">📆 Date</label>
                 <input
                   type="date"
                   value={bookingDate}
                   onChange={e => setBookingDate(e.target.value)}
                   required
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-purple-500 focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block font-medium">Time</label>
+                <label className="block font-semibold mb-2 text-purple-300">⏰ Time</label>
                 <input
                   type="time"
                   value={bookingTime}
                   onChange={e => setBookingTime(e.target.value)}
                   required
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-purple-500 focus:outline-none"
                 />
               </div>
               <button
                 type="submit"
-                className="w-full bg-blue-600 text-white py-2 rounded font-semibold"
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all"
               >
-                Confirm Booking
+                ✓ Confirm Booking
               </button>
             </form>
-            {bookingStatus && <div className="mt-2 text-center text-green-600">{bookingStatus}</div>}
+            {bookingStatus && (
+              <div className="mt-4 p-3 bg-green-500/20 border border-green-500/50 rounded-lg text-center text-green-300">
+                {bookingStatus}
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {renderMyBookings()}
-      {renderReviewModal()}
+        {renderMyBookings()}
+        {renderReviewModal()}
 
-      <section className="mb-12">
-        <h2 className="text-2xl font-semibold mb-4">Available Movers</h2>
-        {renderMovers("available")}
-      </section>
+        {/* Available Movers Section */}
+        <section className="mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-3xl font-bold">✨ Available Movers</h2>
+            <span className="bg-green-500/20 text-green-300 px-4 py-2 rounded-full text-sm font-semibold">
+              {movers.filter(m => m.status === "available").length} Available
+            </span>
+          </div>
+          {renderMovers("available")}
+        </section>
 
-      <section className="mb-12">
-        <h2 className="text-2xl font-semibold mb-4">Movers Who Accepted Requests</h2>
-        {renderMovers("accepted")}
-      </section>
+        {/* Accepted Movers Section */}
+        <section className="mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-3xl font-bold">✅ Accepted Requests</h2>
+            <span className="bg-blue-500/20 text-blue-300 px-4 py-2 rounded-full text-sm font-semibold">
+              {movers.filter(m => m.status === "accepted").length} Accepted
+            </span>
+          </div>
+          {renderMovers("accepted")}
+        </section>
 
-      <section>
-        <h2 className="text-2xl font-semibold mb-4">Movers Who Declined Requests</h2>
-        {renderMovers("declined")}
-      </section>
+        {/* Declined Movers Section */}
+        <section>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-3xl font-bold">❌ Declined Requests</h2>
+            <span className="bg-red-500/20 text-red-300 px-4 py-2 rounded-full text-sm font-semibold">
+              {movers.filter(m => m.status === "declined").length} Declined
+            </span>
+          </div>
+          {renderMovers("declined")}
+        </section>
+      </div>
     </div>
   );
 };
