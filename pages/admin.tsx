@@ -48,8 +48,11 @@ const AdminDashboard: React.FC = () => {
   ];
 
   useEffect(() => {
+    // Wait for auth to be ready
+    if (!user) return;
+    
     // Check if user is admin
-    if (user && !adminEmails.includes(user.email || "")) {
+    if (!adminEmails.includes(user.email || "")) {
       alert("Access denied. Admin only.");
       router.push("/");
       return;
