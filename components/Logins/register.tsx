@@ -24,12 +24,15 @@ const Register: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [credentialFiles, setCredentialFiles] = useState<FileList | null>(null);
   const [uploadingCreds, setUploadingCreds] = useState(false);
+  const [registrationStep, setRegistrationStep] = useState<string>("");
   const router = useRouter();
 
   const onSubmit = async (data: FormData) => {
     setUploadingCreds(true);
+    setError(null);
     try {
       // Create the user in Firebase Authentication
+      setRegistrationStep("Creating account...");
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         data.email,
@@ -38,22 +41,27 @@ const Register: React.FC = () => {
       const user = userCredential.user;
 
       // Send email verification
+      setRegistrationStep("Sending verification email...");
       await sendEmailVerification(user);
 
-      // Upload credential files if any
+      // Upload credential files in parallel if any
       let credentialUrls: string[] = [];
       if (credentialFiles && credentialFiles.length > 0) {
+        setRegistrationStep(`Uploading ${credentialFiles.length} credential file(s)...`);
         const storage = getStorage();
-        for (let i = 0; i < credentialFiles.length; i++) {
-          const file = credentialFiles[i];
+        // Create array of upload promises for parallel processing
+        const uploadPromises = Array.from(credentialFiles).map(async (file) => {
           const storageRef = ref(storage, `movers/${user.uid}/credentials/${file.name}`);
           await uploadBytes(storageRef, file);
-          const url = await getDownloadURL(storageRef);
-          credentialUrls.push(url);
-        }
+          return await getDownloadURL(storageRef);
+        });
+        
+        // Wait for all uploads to complete in parallel
+        credentialUrls = await Promise.all(uploadPromises);
       }
 
       // Save the user's details in Firestore using UID as document ID
+      setRegistrationStep("Saving profile information...");
       const userRef = doc(db, "users", user.uid, "movers", user.uid);
       await setDoc(userRef, {
         companyName: data.companyName,
@@ -103,8 +111,18 @@ const Register: React.FC = () => {
               multiple
               onChange={e => setCredentialFiles(e.target.files)}
               className="w-full px-6 py-2 bg-transparent border border-purple-400 rounded-xl text-white"
+              disabled={uploadingCreds}
             />
-            {uploadingCreds && <p className="text-purple-200 mt-1">Uploading credentials...</p>}
+            {credentialFiles && credentialFiles.length > 0 && (
+              <p className="text-purple-200 mt-1 text-sm">
+                {credentialFiles.length} file(s) selected
+              </p>
+            )}
+            {uploadingCreds && registrationStep && (
+              <p className="text-yellow-300 mt-1 animate-pulse">
+                {registrationStep}
+              </p>
+            )}
           </div>
           {/** Company Name Field */}
           <div>
