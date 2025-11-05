@@ -48,6 +48,17 @@ const ClientDashboard: React.FC = () => {
   const user = auth?.currentUser;
   const router = useRouter();
 
+  // Redirect admin users to admin dashboard
+  useEffect(() => {
+    if (!user) return;
+    
+    const adminEmails = ["admin@admin.com", "admin@moversconnect.com", "beastkee@example.com"];
+    if (user.email && adminEmails.includes(user.email)) {
+      router.replace("/admin");
+      return;
+    }
+  }, [user, router]);
+
   // Fetch my bookings (as client) - Real-time
   useEffect(() => {
     if (!user) return;

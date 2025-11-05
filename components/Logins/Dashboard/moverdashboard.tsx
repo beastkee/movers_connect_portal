@@ -46,6 +46,17 @@ const MoverDashboard: React.FC = () => {
   const user = auth?.currentUser;
   const router = useRouter();
 
+  // Redirect admin users to admin dashboard
+  useEffect(() => {
+    if (!user) return;
+    
+    const adminEmails = ["admin@admin.com", "admin@moversconnect.com", "beastkee@example.com"];
+    if (user.email && adminEmails.includes(user.email)) {
+      router.replace("/admin");
+      return;
+    }
+  }, [user, router]);
+
   // Fetch bookings for this mover
   useEffect(() => {
     if (!user) return;
