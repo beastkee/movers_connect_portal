@@ -22,9 +22,17 @@ const LoginPage = () => {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
+      // Check if admin email - redirect to admin dashboard directly
+      const adminEmails = ["admin@admin.com", "admin@moversconnect.com", "beastkee@example.com"];
+      const isAdmin = adminEmails.includes(email);
+      
+      if (isAdmin) {
+        router.push("/admin"); // Redirect admin to admin dashboard
+        return;
+      }
+
       // Require email verification (skip for admin during development)
-      const isAdminEmail = email === "admin@admin.com";
-      if (!user.emailVerified && !isAdminEmail) {
+      if (!user.emailVerified) {
         setError("Please verify your email before logging in. Check your inbox for a verification link.");
         setLoading(false);
         return;

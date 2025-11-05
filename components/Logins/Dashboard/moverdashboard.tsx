@@ -4,6 +4,7 @@ import { collectionGroup, onSnapshot, doc, getDoc, collection, query, where, upd
 import { getAuth } from "firebase/auth";
 import { getMoverReviews } from "@/firebase/review";
 import type { Review } from "@/types/review";
+import { useRouter } from "next/router";
 
 interface ClientRequest {
   id: string;
@@ -43,6 +44,17 @@ const MoverDashboard: React.FC = () => {
   const [sendingMessage, setSendingMessage] = useState<boolean>(false);
   const auth = typeof window !== "undefined" ? getAuth() : null;
   const user = auth?.currentUser;
+  const router = useRouter();
+
+  // Block admin from accessing mover dashboard
+  useEffect(() => {
+    if (!user) return;
+    const adminEmails = ["admin@admin.com", "admin@moversconnect.com", "beastkee@example.com"];
+    if (adminEmails.includes(user.email || "")) {
+      alert("Admin accounts cannot access mover dashboard. Redirecting to admin panel.");
+      router.push("/admin");
+    }
+  }, [user, router]);
 
   // Fetch bookings for this mover
   useEffect(() => {
