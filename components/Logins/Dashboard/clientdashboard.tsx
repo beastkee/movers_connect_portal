@@ -32,6 +32,14 @@ const ClientDashboard: React.FC = () => {
   const [moverReviews, setMoverReviews] = useState<Record<string, Review[]>>({});
   const [quotes, setQuotes] = useState<any[]>([]);
   const [showQuotes, setShowQuotes] = useState(false);
+  const [messageModal, setMessageModal] = useState<{ isOpen: boolean; bookingId: string | null; moverName: string }>({ 
+    isOpen: false, 
+    bookingId: null, 
+    moverName: '' 
+  });
+  const [messages, setMessages] = useState<any[]>([]);
+  const [newMessage, setNewMessage] = useState<string>("");
+  const [sendingMessage, setSendingMessage] = useState(false);
   const auth = typeof window !== "undefined" ? getAuth() : null;
   const user = auth?.currentUser;
   // Fetch my bookings (as client)
@@ -102,6 +110,47 @@ const ClientDashboard: React.FC = () => {
     const reviews = moverReviews[booking.moverId] || [];
     return !reviews.some(r => r.bookingId === booking.id && r.clientId === booking.clientId);
   };
+
+  // Open message modal and fetch messages
+  const openMessageModal = (bookingId: string, moverName: string) => {
+    setMessageModal({ isOpen: true, bookingId, moverName });
+    setMessages([]);
+    setNewMessage('');
+    
+    // Set up real-time listener for messages
+    const messagesRef = collection(db, 'bookings', bookingId, 'messages');
+    const unsubscribe = onSnapshot(messagesRef, (snapshot: any) => {
+      const msgs = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+      msgs.sort((a: any, b: any) => a.timestamp?.seconds - b.timestamp?.seconds);
+      setMessages(msgs);
+    });
+    
+    // Clean up listener when modal closes
+    return unsubscribe;
+  };
+
+  // Send message
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !messageModal.bookingId || !user) return;
+    
+    setSendingMessage(true);
+    try {
+      const messagesRef = collection(db, 'bookings', messageModal.bookingId, 'messages');
+      await addDoc(messagesRef, {
+        message: newMessage.trim(),
+        sender: 'client',
+        senderName: user.email?.split('@')[0] || 'Client',
+        timestamp: Timestamp.now()
+      });
+      setNewMessage('');
+    } catch (error) {
+      console.error('Error sending message:', error);
+      alert('Failed to send message');
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
   // My Bookings & Review Section
   const renderMyBookings = () => (
     <section className="mb-12">
@@ -125,7 +174,7 @@ const ClientDashboard: React.FC = () => {
                   <th className="px-6 py-4 text-left text-sm font-semibold text-purple-300">Date</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-purple-300">Time</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-purple-300">Status</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-purple-300">Review</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-purple-300">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/10">
@@ -144,16 +193,22 @@ const ClientDashboard: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      {isBookingReviewable(b) ? (
+                      <div className="flex gap-2">
                         <button
-                          className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-4 py-2 rounded-lg font-semibold transition-all shadow-lg hover:shadow-xl"
-                          onClick={() => setReviewModal({ open: true, booking: b })}
+                          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 rounded-lg font-semibold transition-all shadow-lg hover:shadow-xl"
+                          onClick={() => openMessageModal(b.id, b.moverEmail || 'Mover')}
                         >
-                          Leave Review
+                          💬 Message
                         </button>
-                      ) : (
-                        <span className="text-gray-400 text-sm">{b.status === "accepted" ? "✓ Reviewed" : "-"}</span>
-                      )}
+                        {isBookingReviewable(b) && (
+                          <button
+                            className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-4 py-2 rounded-lg font-semibold transition-all shadow-lg hover:shadow-xl"
+                            onClick={() => setReviewModal({ open: true, booking: b })}
+                          >
+                            ⭐ Review
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -541,6 +596,90 @@ const ClientDashboard: React.FC = () => {
           {renderMovers("declined")}
         </section>
       </div>
+
+      {/* Message Modal */}
+      {messageModal.isOpen && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl shadow-2xl border border-gray-700 w-full max-w-2xl max-h-[80vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-700">
+              <div>
+                <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+                  💬 Messages
+                </h3>
+                <p className="text-gray-400 text-sm mt-1">
+                  Chat with {messageModal.moverName}
+                </p>
+              </div>
+              <button
+                onClick={() => setMessageModal({ isOpen: false, bookingId: null, moverName: '' })}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <span className="text-2xl">×</span>
+              </button>
+            </div>
+
+            {/* Messages Area */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {messages.length === 0 ? (
+                <div className="text-center text-gray-400 py-8">
+                  <p className="text-lg">No messages yet</p>
+                  <p className="text-sm mt-2">Start the conversation!</p>
+                </div>
+              ) : (
+                messages.map((msg, index) => (
+                  <div
+                    key={index}
+                    className={`flex ${msg.sender === 'client' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`max-w-[70%] rounded-2xl p-4 ${
+                        msg.sender === 'client'
+                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
+                          : 'bg-gray-700 text-gray-100'
+                      }`}
+                    >
+                      <p className="text-sm font-semibold mb-1">
+                        {msg.sender === 'client' ? 'You' : messageModal.moverName}
+                      </p>
+                      <p className="break-words">{msg.message}</p>
+                      <p className="text-xs mt-2 opacity-70">
+                        {msg.timestamp?.toDate ? msg.timestamp.toDate().toLocaleString() : 'Just now'}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Message Input */}
+            <div className="p-6 border-t border-gray-700">
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !sendingMessage && newMessage.trim()) {
+                      handleSendMessage();
+                    }
+                  }}
+                  placeholder="Type your message..."
+                  className="flex-1 bg-gray-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-700"
+                  disabled={sendingMessage}
+                />
+                <button
+                  onClick={handleSendMessage}
+                  disabled={sendingMessage || !newMessage.trim()}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {sendingMessage ? 'Sending...' : 'Send'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

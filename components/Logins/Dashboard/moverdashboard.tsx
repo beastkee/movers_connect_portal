@@ -32,6 +32,14 @@ const MoverDashboard: React.FC = () => {
   const [averageRating, setAverageRating] = useState<number>(0);
   const [isAvailable, setIsAvailable] = useState<boolean>(true);
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
+  const [messageModal, setMessageModal] = useState<{ isOpen: boolean; bookingId: string | null; clientName: string }>({ 
+    isOpen: false, 
+    bookingId: null, 
+    clientName: '' 
+  });
+  const [messages, setMessages] = useState<any[]>([]);
+  const [newMessage, setNewMessage] = useState<string>('');
+  const [sendingMessage, setSendingMessage] = useState<boolean>(false);
   const auth = typeof window !== "undefined" ? getAuth() : null;
   const user = auth?.currentUser;
 
@@ -194,6 +202,46 @@ const MoverDashboard: React.FC = () => {
     } catch (error) {
       console.error("Error sending quote:", error);
       alert("Failed to send quote. Please try again.");
+    }
+  };
+
+  // Handle opening message modal
+  const openMessageModal = (bookingId: string, clientName: string) => {
+    setMessageModal({ isOpen: true, bookingId, clientName });
+    setMessages([]);
+    setNewMessage('');
+    
+    // Set up real-time listener for messages
+    const messagesRef = collection(db, 'bookings', bookingId, 'messages');
+    const unsubscribe = onSnapshot(messagesRef, (snapshot: any) => {
+      const msgs = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+      msgs.sort((a: any, b: any) => a.timestamp?.seconds - b.timestamp?.seconds);
+      setMessages(msgs);
+    });
+    
+    // Clean up listener when modal closes
+    return unsubscribe;
+  };
+
+  // Handle sending message
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !messageModal.bookingId || !user) return;
+    
+    setSendingMessage(true);
+    try {
+      const messagesRef = collection(db, 'bookings', messageModal.bookingId, 'messages');
+      await addDoc(messagesRef, {
+        message: newMessage.trim(),
+        sender: 'mover',
+        senderName: user.email?.split('@')[0] || 'Mover',
+        timestamp: Timestamp.now()
+      });
+      setNewMessage('');
+    } catch (error) {
+      console.error('Error sending message:', error);
+      alert('Failed to send message');
+    } finally {
+      setSendingMessage(false);
     }
   };
 
@@ -427,6 +475,12 @@ const MoverDashboard: React.FC = () => {
                         }`}>
                           {b.status.charAt(0).toUpperCase() + b.status.slice(1)}
                         </span>
+                        <button
+                          onClick={() => openMessageModal(b.id, b.clientEmail)}
+                          className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 py-2 rounded-lg font-semibold transition-all shadow-lg"
+                        >
+                          💬 Message
+                        </button>
                         {b.status === "pending" && (
                           <div className="flex gap-2">
                             <button
@@ -646,6 +700,90 @@ const MoverDashboard: React.FC = () => {
                   ✓ Send Quote
                 </button>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Message Modal */}
+        {messageModal.isOpen && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl shadow-2xl border border-gray-700 w-full max-w-2xl max-h-[80vh] flex flex-col">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-700">
+                <div>
+                  <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+                    💬 Messages
+                  </h3>
+                  <p className="text-gray-400 text-sm mt-1">
+                    Chat with {messageModal.clientName}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setMessageModal({ isOpen: false, bookingId: null, clientName: '' })}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  <span className="text-2xl">×</span>
+                </button>
+              </div>
+
+              {/* Messages Area */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                {messages.length === 0 ? (
+                  <div className="text-center text-gray-400 py-8">
+                    <p className="text-lg">No messages yet</p>
+                    <p className="text-sm mt-2">Start the conversation!</p>
+                  </div>
+                ) : (
+                  messages.map((msg, index) => (
+                    <div
+                      key={index}
+                      className={`flex ${msg.sender === 'mover' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div
+                        className={`max-w-[70%] rounded-2xl p-4 ${
+                          msg.sender === 'mover'
+                            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
+                            : 'bg-gray-700 text-gray-100'
+                        }`}
+                      >
+                        <p className="text-sm font-semibold mb-1">
+                          {msg.sender === 'mover' ? 'You' : messageModal.clientName}
+                        </p>
+                        <p className="break-words">{msg.message}</p>
+                        <p className="text-xs mt-2 opacity-70">
+                          {msg.timestamp?.toDate ? msg.timestamp.toDate().toLocaleString() : 'Just now'}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Message Input */}
+              <div className="p-6 border-t border-gray-700">
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && !sendingMessage && newMessage.trim()) {
+                        handleSendMessage();
+                      }
+                    }}
+                    placeholder="Type your message..."
+                    className="flex-1 bg-gray-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-700"
+                    disabled={sendingMessage}
+                  />
+                  <button
+                    onClick={handleSendMessage}
+                    disabled={sendingMessage || !newMessage.trim()}
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {sendingMessage ? 'Sending...' : 'Send'}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
