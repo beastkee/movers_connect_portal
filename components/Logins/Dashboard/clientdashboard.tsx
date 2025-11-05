@@ -276,7 +276,7 @@ const ClientDashboard: React.FC = () => {
     const filteredMovers = movers.filter(
       (mover) =>
         mover.status === status &&
-        mover.name.toLowerCase().includes(searchQuery.toLowerCase())
+        mover.name?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     if (filteredMovers.length === 0) {
