@@ -29,6 +29,8 @@ const MoverDashboard: React.FC = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [showReviews, setShowReviews] = useState(false);
   const [averageRating, setAverageRating] = useState<number>(0);
+  const [isAvailable, setIsAvailable] = useState<boolean>(true);
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const auth = typeof window !== "undefined" ? getAuth() : null;
   const user = auth?.currentUser;
 
@@ -78,6 +80,46 @@ const MoverDashboard: React.FC = () => {
     
     fetchReviews();
   }, [user]);
+
+  // Fetch availability status
+  useEffect(() => {
+    if (!user) return;
+    
+    const fetchAvailability = async () => {
+      try {
+        const docRef = doc(db, "users", user.uid, "movers", user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setIsAvailable(data.isAvailable !== false); // Default to true if not set
+        }
+      } catch (error) {
+        console.error("Error fetching availability:", error);
+      }
+    };
+    
+    fetchAvailability();
+  }, [user]);
+
+  // Toggle availability
+  const toggleAvailability = async () => {
+    if (!user || availabilityLoading) return;
+    
+    setAvailabilityLoading(true);
+    try {
+      const docRef = doc(db, "users", user.uid, "movers", user.uid);
+      await updateDoc(docRef, {
+        isAvailable: !isAvailable,
+        lastUpdated: Timestamp.now(),
+      });
+      setIsAvailable(!isAvailable);
+    } catch (error) {
+      console.error("Error updating availability:", error);
+      alert("Failed to update availability. Please try again.");
+    } finally {
+      setAvailabilityLoading(false);
+    }
+  };
 
   const [searchQuery, setSearchQuery] = useState<string>("");
 
@@ -170,6 +212,27 @@ const MoverDashboard: React.FC = () => {
               <p className="text-blue-200">Manage your bookings and view client requests</p>
             </div>
             <div className="hidden md:flex items-center gap-4">
+              {/* Availability Toggle */}
+              <button
+                onClick={toggleAvailability}
+                disabled={availabilityLoading}
+                className={`px-6 py-3 rounded-xl font-semibold shadow-lg transition-all ${
+                  isAvailable
+                    ? "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                    : "bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800"
+                } ${availabilityLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">{isAvailable ? "🟢" : "🔴"}</span>
+                  <div className="text-left">
+                    <p className="text-sm font-semibold">
+                      {isAvailable ? "Available" : "Unavailable"}
+                    </p>
+                    <p className="text-xs opacity-80">Click to toggle</p>
+                  </div>
+                </div>
+              </button>
+
               {/* Rating Display */}
               {reviews.length > 0 && (
                 <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-6 py-3 text-center">
@@ -190,6 +253,29 @@ const MoverDashboard: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Mobile Availability Toggle */}
+        <div className="md:hidden mb-6">
+          <button
+            onClick={toggleAvailability}
+            disabled={availabilityLoading}
+            className={`w-full px-6 py-4 rounded-xl font-semibold shadow-lg transition-all ${
+              isAvailable
+                ? "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                : "bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800"
+            } ${availabilityLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+          >
+            <div className="flex items-center justify-center gap-3">
+              <span className="text-3xl">{isAvailable ? "🟢" : "🔴"}</span>
+              <div>
+                <p className="text-lg font-bold">
+                  {isAvailable ? "You're Available" : "You're Unavailable"}
+                </p>
+                <p className="text-sm opacity-90">Tap to toggle status</p>
+              </div>
+            </div>
+          </button>
+        </div>
+
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-4 mb-8">
           <button
