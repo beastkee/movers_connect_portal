@@ -40,44 +40,51 @@ const Register: React.FC = () => {
       );
       const user = userCredential.user;
 
-      // Send email verification
-      setRegistrationStep("Sending verification email...");
-      await sendEmailVerification(user);
-
-      // Upload credential files in parallel if any
-      let credentialUrls: string[] = [];
-      if (credentialFiles && credentialFiles.length > 0) {
-        setRegistrationStep(`Uploading ${credentialFiles.length} credential file(s)...`);
-        const storage = getStorage();
-        // Create array of upload promises for parallel processing
-        const uploadPromises = Array.from(credentialFiles).map(async (file) => {
-          const storageRef = ref(storage, `movers/${user.uid}/credentials/${file.name}`);
-          await uploadBytes(storageRef, file);
-          return await getDownloadURL(storageRef);
-        });
-        
-        // Wait for all uploads to complete in parallel
-        credentialUrls = await Promise.all(uploadPromises);
-      }
-
-      // Save the user's details in Firestore using UID as document ID
-      setRegistrationStep("Saving profile information...");
+      // Save the user's basic details in Firestore immediately
+      setRegistrationStep("Setting up profile...");
       const userRef = doc(db, "users", user.uid, "movers", user.uid);
       await setDoc(userRef, {
         companyName: data.companyName,
         serviceArea: data.serviceArea,
         contactNumber: data.contactNumber,
         email: data.email,
-        credentials: credentialUrls,
+        credentials: [],
         status: "available",
+        verificationStatus: "pending", // New field for admin verification
         createdAt: new Date(),
+      });
+
+      // Upload credentials in the background (non-blocking)
+      if (credentialFiles && credentialFiles.length > 0) {
+        setRegistrationStep(`Uploading ${credentialFiles.length} credential file(s)...`);
+        const storage = getStorage();
+        
+        // Start uploads but don't wait for them
+        Promise.all(
+          Array.from(credentialFiles).map(async (file) => {
+            const storageRef = ref(storage, `movers/${user.uid}/credentials/${file.name}`);
+            await uploadBytes(storageRef, file);
+            return await getDownloadURL(storageRef);
+          })
+        ).then(async (credentialUrls) => {
+          // Update credentials after upload completes
+          await setDoc(userRef, { credentials: credentialUrls }, { merge: true });
+        }).catch((err) => {
+          console.error("Error uploading credentials:", err);
+        });
+      }
+
+      // Send email verification (non-blocking)
+      sendEmailVerification(user).catch((err: any) => {
+        console.error("Error sending verification email:", err);
       });
 
       setSuccess(true);
       reset();
       setCredentialFiles(null);
 
-      // Inform user to check their email for verification
+      // Inform user about the verification process
+      setError("Registration successful! You can now login. Your credentials will be verified by an admin before you can receive bookings.");
       setError("Registration successful! Please check your email and verify your account before logging in.");
       // Redirect after a delay
       setTimeout(() => router.push("/login"), 4000);

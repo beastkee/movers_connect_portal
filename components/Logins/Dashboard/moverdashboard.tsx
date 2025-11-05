@@ -32,6 +32,7 @@ const MoverDashboard: React.FC = () => {
   const [averageRating, setAverageRating] = useState<number>(0);
   const [isAvailable, setIsAvailable] = useState<boolean>(true);
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState<"pending" | "approved" | "rejected">("pending");
   const [messageModal, setMessageModal] = useState<{ isOpen: boolean; bookingId: string | null; clientName: string }>({ 
     isOpen: false, 
     bookingId: null, 
@@ -175,6 +176,12 @@ const MoverDashboard: React.FC = () => {
     e.preventDefault();
     if (!quoteModal.request || !user) return;
     
+    // Check verification status
+    if (verificationStatus !== "approved") {
+      alert("You must be verified by an admin before sending quotes.");
+      return;
+    }
+    
     if (!quoteModal.request.clientId) {
       alert("Cannot send quote: Client information not available.");
       return;
@@ -255,18 +262,45 @@ const MoverDashboard: React.FC = () => {
       if (docSnap.exists()) {
         const data = docSnap.data();
         setCredentials(data.credentials || []);
+        setVerificationStatus(data.verificationStatus || "pending");
+        setIsAvailable(data.isAvailable !== undefined ? data.isAvailable : true);
       } else {
         setCredentials([]);
+        setVerificationStatus("pending");
       }
     } catch {
       setCredentials([]);
+      setVerificationStatus("pending");
     } finally {
       setLoadingCreds(false);
     }
   };
 
+  // Fetch verification status on mount
+  useEffect(() => {
+    fetchCredentials();
+  }, [user]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-800 via-gray-900 to-black text-white">
+      {/* Verification Status Banner */}
+      {verificationStatus !== "approved" && (
+        <div className={`${
+          verificationStatus === "pending" 
+            ? "bg-gradient-to-r from-yellow-600 to-orange-600" 
+            : "bg-gradient-to-r from-red-600 to-rose-600"
+        } py-4 px-6 text-center shadow-lg`}>
+          <p className="text-white font-semibold text-lg">
+            {verificationStatus === "pending" && (
+              <>⏳ Your account is pending admin verification. You can browse but cannot send quotes or receive bookings yet.</>
+            )}
+            {verificationStatus === "rejected" && (
+              <>❌ Your account verification was rejected. Please contact support for more information.</>
+            )}
+          </p>
+        </div>
+      )}
+
       {/* Header Section */}
       <div className="bg-gradient-to-r from-indigo-800/50 to-blue-800/50 backdrop-blur-sm border-b border-white/10 shadow-xl">
         <div className="max-w-7xl mx-auto px-6 py-8">
@@ -642,9 +676,20 @@ const MoverDashboard: React.FC = () => {
                     {interestedRequests.has(request.id) ? "⭐ Interested" : "👋 Express Interest"}
                   </button>
                   <button
-                    className="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg font-semibold transition-all shadow-lg"
-                    title="Send Quote"
-                    onClick={() => setQuoteModal({ open: true, request })}
+                    className={`px-4 py-2 rounded-lg font-semibold transition-all shadow-lg ${
+                      verificationStatus === "approved"
+                        ? "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white cursor-pointer"
+                        : "bg-gray-600 text-gray-400 cursor-not-allowed opacity-50"
+                    }`}
+                    title={verificationStatus === "approved" ? "Send Quote" : "Verification required to send quotes"}
+                    onClick={() => {
+                      if (verificationStatus === "approved") {
+                        setQuoteModal({ open: true, request });
+                      } else {
+                        alert("You must be verified by an admin before sending quotes.");
+                      }
+                    }}
+                    disabled={verificationStatus !== "approved"}
                   >
                     💰
                   </button>
