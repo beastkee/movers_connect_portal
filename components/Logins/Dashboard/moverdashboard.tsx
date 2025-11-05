@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { db } from "@/firebase/firebaseConfig";
 import { collectionGroup, onSnapshot, doc, getDoc, collection, query, where, updateDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import { getMoverReviews } from "@/firebase/review";
+import type { Review } from "@/types/review";
 
 interface ClientRequest {
   id: string;
@@ -24,6 +26,9 @@ const MoverDashboard: React.FC = () => {
   const [quoteModal, setQuoteModal] = useState<{ open: boolean; request: ClientRequest | null }>({ open: false, request: null });
   const [quoteAmount, setQuoteAmount] = useState<string>("");
   const [quoteNotes, setQuoteNotes] = useState<string>("");
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [showReviews, setShowReviews] = useState(false);
+  const [averageRating, setAverageRating] = useState<number>(0);
   const auth = typeof window !== "undefined" ? getAuth() : null;
   const user = auth?.currentUser;
 
@@ -55,6 +60,24 @@ const MoverDashboard: React.FC = () => {
     
     return () => unsubscribe();
   }, []);
+
+  // Fetch reviews for this mover
+  useEffect(() => {
+    if (!user) return;
+    
+    const fetchReviews = async () => {
+      const moverReviews = await getMoverReviews(user.uid);
+      setReviews(moverReviews);
+      
+      // Calculate average rating
+      if (moverReviews.length > 0) {
+        const avg = moverReviews.reduce((sum, review) => sum + review.rating, 0) / moverReviews.length;
+        setAverageRating(Math.round(avg * 10) / 10); // Round to 1 decimal
+      }
+    };
+    
+    fetchReviews();
+  }, [user]);
 
   const [searchQuery, setSearchQuery] = useState<string>("");
 
@@ -138,6 +161,16 @@ const MoverDashboard: React.FC = () => {
               <p className="text-blue-200">Manage your bookings and view client requests</p>
             </div>
             <div className="hidden md:flex items-center gap-4">
+              {/* Rating Display */}
+              {reviews.length > 0 && (
+                <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-6 py-3 text-center">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-3xl font-bold text-yellow-400">{averageRating}</span>
+                    <span className="text-2xl">⭐</span>
+                  </div>
+                  <p className="text-xs text-gray-300">{reviews.length} review{reviews.length !== 1 ? 's' : ''}</p>
+                </div>
+              )}
               <div className="text-right">
                 <p className="text-sm text-blue-200">Logged in as</p>
                 <p className="font-semibold">{user?.email}</p>
@@ -169,6 +202,12 @@ const MoverDashboard: React.FC = () => {
             }}
           >
             📄 {showCreds ? "Hide My Credentials" : "Show My Credentials"}
+          </button>
+          <button
+            className="bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white px-6 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+            onClick={() => setShowReviews((prev) => !prev)}
+          >
+            ⭐ {showReviews ? "Hide Reviews" : "Show Reviews"} ({reviews.length})
           </button>
         </div>
         {showBookings && (
@@ -300,6 +339,66 @@ const MoverDashboard: React.FC = () => {
                     </div>
                     <span className="text-blue-400">→</span>
                   </a>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Reviews Section */}
+        {showReviews && (
+          <div className="mb-8 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold">My Reviews & Ratings</h2>
+                {reviews.length > 0 && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="text-3xl font-bold text-yellow-400">{averageRating}</span>
+                    <div className="flex">
+                      {[...Array(5)].map((_, i) => (
+                        <span key={i} className={`text-2xl ${i < Math.round(averageRating) ? 'text-yellow-400' : 'text-gray-600'}`}>
+                          ⭐
+                        </span>
+                      ))}
+                    </div>
+                    <span className="text-gray-400 ml-2">({reviews.length} reviews)</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {reviews.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-400 text-lg mb-2">No reviews yet</p>
+                <p className="text-gray-500 text-sm">Complete bookings to receive reviews from clients</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {reviews.map((review) => (
+                  <div key={review.id} className="bg-white/5 border border-white/10 rounded-lg p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="bg-yellow-500/20 w-10 h-10 rounded-full flex items-center justify-center">
+                          <span className="text-xl">👤</span>
+                        </div>
+                        <div>
+                          <p className="font-semibold">Client Review</p>
+                          <div className="flex items-center gap-1">
+                            {[...Array(5)].map((_, i) => (
+                              <span key={i} className={`text-sm ${i < review.rating ? 'text-yellow-400' : 'text-gray-600'}`}>
+                                ⭐
+                              </span>
+                            ))}
+                            <span className="text-sm text-gray-400 ml-1">({review.rating}/5)</span>
+                          </div>
+                        </div>
+                      </div>
+                      <span className="text-xs text-gray-400">
+                        {review.createdAt ? new Date(review.createdAt.seconds * 1000).toLocaleDateString() : 'Recent'}
+                      </span>
+                    </div>
+                    <p className="text-gray-300 mt-2 pl-12">{review.comment}</p>
+                  </div>
                 ))}
               </div>
             )}
