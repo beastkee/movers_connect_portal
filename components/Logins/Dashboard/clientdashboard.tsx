@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { db } from "@/firebase/firebaseConfig";
-import { collectionGroup, onSnapshot, QuerySnapshot, DocumentData, collection, addDoc, Timestamp, getDocs, query, where } from "firebase/firestore";
+import { collectionGroup, onSnapshot, QuerySnapshot, DocumentData, collection, addDoc, Timestamp, getDocs, query, where, deleteDoc, doc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { addReview, getMoverReviews } from "@/firebase/review";
 import type { Review } from "@/types/review";
@@ -26,7 +26,6 @@ const ClientDashboard: React.FC = () => {
   const [selectedMover, setSelectedMover] = useState<Mover | null>(null);
   const [bookingDate, setBookingDate] = useState("");
   const [bookingTime, setBookingTime] = useState("");
-  const [bookingStatus, setBookingStatus] = useState<string | null>(null);
   const [myBookings, setMyBookings] = useState<any[]>([]);
   const [reviewModal, setReviewModal] = useState<{ open: boolean; booking: any | null }>({ open: false, booking: null });
   const [reviewRating, setReviewRating] = useState<number>(5);
@@ -49,16 +48,19 @@ const ClientDashboard: React.FC = () => {
   const user = auth?.currentUser;
   const router = useRouter();
 
-  // Fetch my bookings (as client)
+  // Fetch my bookings (as client) - Real-time
   useEffect(() => {
     if (!user) return;
-    const fetchBookings = async () => {
-      const q = query(collection(db, "bookings"), where("clientId", "==", user.uid));
-      const snap = await getDocs(q);
-      setMyBookings(snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() })));
-    };
-    fetchBookings();
-  }, [user, bookingStatus]);
+    
+    const q = query(collection(db, "bookings"), where("clientId", "==", user.uid));
+    const unsubscribe = onSnapshot(q, (snapshot: any) => {
+      setMyBookings(snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() })));
+    }, (error: any) => {
+      console.error("Error fetching bookings:", error);
+    });
+    
+    return () => unsubscribe();
+  }, [user]);
 
   // Fetch reviews for movers in my bookings
   useEffect(() => {
@@ -158,6 +160,28 @@ const ClientDashboard: React.FC = () => {
     }
   };
 
+  // Cancel booking
+  const handleCancelBooking = async (bookingId: string, bookingStatus: string) => {
+    // Only allow canceling pending bookings
+    if (bookingStatus !== "pending") {
+      alert("You can only cancel pending bookings. For accepted bookings, please contact the mover.");
+      return;
+    }
+
+    if (!confirm("Are you sure you want to cancel this booking?")) {
+      return;
+    }
+
+    try {
+      await deleteDoc(doc(db, "bookings", bookingId));
+      alert("Booking canceled successfully!");
+      // Real-time listener will automatically update the list
+    } catch (error) {
+      console.error("Error canceling booking:", error);
+      alert("Failed to cancel booking. Please try again.");
+    }
+  };
+
   // My Bookings & Review Section
   const renderMyBookings = () => (
     <section className="mb-12">
@@ -202,14 +226,22 @@ const ClientDashboard: React.FC = () => {
                     <td className="px-6 py-4">
                       <div className="flex gap-2">
                         <button
-                          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 rounded-lg font-semibold transition-all shadow-lg hover:shadow-xl"
+                          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 rounded-lg font-semibold transition-all shadow-lg hover:shadow-xl text-sm"
                           onClick={() => openMessageModal(b.id, b.moverEmail || 'Mover')}
                         >
                           💬 Message
                         </button>
+                        {b.status === "pending" && (
+                          <button
+                            className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white px-4 py-2 rounded-lg font-semibold transition-all shadow-lg hover:shadow-xl text-sm"
+                            onClick={() => handleCancelBooking(b.id, b.status)}
+                          >
+                            ✕ Cancel
+                          </button>
+                        )}
                         {isBookingReviewable(b) && (
                           <button
-                            className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-4 py-2 rounded-lg font-semibold transition-all shadow-lg hover:shadow-xl"
+                            className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-4 py-2 rounded-lg font-semibold transition-all shadow-lg hover:shadow-xl text-sm"
                             onClick={() => setReviewModal({ open: true, booking: b })}
                           >
                             ⭐ Review
@@ -329,13 +361,12 @@ const ClientDashboard: React.FC = () => {
   const handleBookClick = (mover: Mover) => {
     setSelectedMover(mover);
     setShowBooking(true);
-    setBookingStatus(null);
   };
 
   const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !selectedMover) return;
-    setBookingStatus(null);
+    
     try {
       await addDoc(collection(db, "bookings"), {
         clientId: user.uid,
@@ -347,13 +378,14 @@ const ClientDashboard: React.FC = () => {
         status: "pending",
         createdAt: Timestamp.now(),
       });
-      setBookingStatus("Booking successful!");
+      alert("Booking successful! The mover will review your request.");
       setShowBooking(false);
       setBookingDate("");
       setBookingTime("");
       setSelectedMover(null);
-    } catch {
-      setBookingStatus("Booking failed. Please try again.");
+    } catch (error) {
+      console.error("Booking error:", error);
+      alert("Booking failed. Please try again.");
     }
   };
 
@@ -583,11 +615,6 @@ const ClientDashboard: React.FC = () => {
                 ✓ Confirm Booking
               </button>
             </form>
-            {bookingStatus && (
-              <div className="mt-4 p-3 bg-green-500/20 border border-green-500/50 rounded-lg text-center text-green-300">
-                {bookingStatus}
-              </div>
-            )}
           </div>
         </div>
       )}
