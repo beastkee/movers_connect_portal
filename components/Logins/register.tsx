@@ -3,7 +3,7 @@ import { sendEmailVerification } from "firebase/auth";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/router";
 import { db, auth } from "@/firebase/firebaseConfig";
-import { collection, doc, setDoc, collectionGroup, query, where, getDocs } from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 
@@ -31,22 +31,7 @@ const Register: React.FC = () => {
     setUploadingCreds(true);
     setError(null);
     try {
-      // Check if email already exists in clients collection
-      setRegistrationStep("Checking email availability...");
-      const clientsQuery = query(
-        collectionGroup(db, "clients"),
-        where("email", "==", data.email)
-      );
-      const clientsSnapshot = await getDocs(clientsQuery);
-      
-      if (!clientsSnapshot.empty) {
-        setError("This email is already registered as a Client. Each email can only have one role. Please use a different email or login as a client.");
-        setUploadingCreds(false);
-        setRegistrationStep("");
-        return;
-      }
-
-      // Create the user in Firebase Authentication
+      // Create the user in Firebase Authentication (this will fail if email already exists)
       setRegistrationStep("Creating account...");
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -54,6 +39,17 @@ const Register: React.FC = () => {
         data.password
       );
       const user = userCredential.user;
+
+      // Check if this user is already registered as a client
+      const clientDoc = await getDoc(doc(db, "users", user.uid, "clients", user.uid));
+      if (clientDoc.exists()) {
+        // User is already a client, delete the auth account and show error
+        await user.delete();
+        setError("This account is already registered as a Client. Each user can only have one role. Please login as a client or use a different email.");
+        setUploadingCreds(false);
+        setRegistrationStep("");
+        return;
+      }
 
       // Save the user's basic details in Firestore immediately
       setRegistrationStep("Setting up profile...");

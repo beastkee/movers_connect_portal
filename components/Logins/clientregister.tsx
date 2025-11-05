@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
-import { doc, setDoc, collectionGroup, query, where, getDocs } from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/firebase/firebaseConfig"; // Ensure Firebase is correctly configured
 import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 
@@ -28,26 +28,23 @@ const ClientRegistration: React.FC = () => {
     setLoading(true);
 
     try {
-      // Check if email already exists in movers collection
-      const moversQuery = query(
-        collectionGroup(db, "movers"),
-        where("email", "==", formData.email)
-      );
-      const moversSnapshot = await getDocs(moversQuery);
-      
-      if (!moversSnapshot.empty) {
-        setError("This email is already registered as a Mover. Each email can only have one role. Please use a different email or login as a mover.");
-        setLoading(false);
-        return;
-      }
-
-      // Firebase Authentication: Create user
+      // Firebase Authentication: Create user (this will fail if email already exists)
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         formData.email,
         formData.password
       );
       const user = userCredential.user;
+
+      // Check if this user is already registered as a mover
+      const moverDoc = await getDoc(doc(db, "users", user.uid, "movers", user.uid));
+      if (moverDoc.exists()) {
+        // User is already a mover, delete the auth account and show error
+        await user.delete();
+        setError("This account is already registered as a Mover. Each user can only have one role. Please login as a mover or use a different email.");
+        setLoading(false);
+        return;
+      }
 
       // Send email verification
       await sendEmailVerification(user);
