@@ -40,6 +40,9 @@ const Register: React.FC = () => {
       );
       const user = userCredential.user;
 
+      // Check if admin account (skip email verification during development)
+      const isAdminEmail = data.email === "admin@admin.com";
+
       // Save the user's basic details in Firestore immediately
       setRegistrationStep("Setting up profile...");
       const userRef = doc(db, "users", user.uid, "movers", user.uid);
@@ -50,7 +53,7 @@ const Register: React.FC = () => {
         email: data.email,
         credentials: [],
         status: "available",
-        verificationStatus: "pending", // New field for admin verification
+        verificationStatus: isAdminEmail ? "approved" : "pending", // Auto-approve admin
         createdAt: new Date(),
       });
 
@@ -74,20 +77,24 @@ const Register: React.FC = () => {
         });
       }
 
-      // Send email verification (non-blocking)
-      sendEmailVerification(user).catch((err: any) => {
-        console.error("Error sending verification email:", err);
-      });
+      // Send email verification (non-blocking, skip for admin)
+      if (!isAdminEmail) {
+        sendEmailVerification(user).catch((err: any) => {
+          console.error("Error sending verification email:", err);
+        });
+      }
 
       setSuccess(true);
       reset();
       setCredentialFiles(null);
 
       // Inform user about the verification process
-      setError("Registration successful! You can now login. Your credentials will be verified by an admin before you can receive bookings.");
-      setError("Registration successful! Please check your email and verify your account before logging in.");
+      const successMessage = isAdminEmail
+        ? "Admin account created successfully! You can login immediately with full access."
+        : "Registration successful! You can now login. Your credentials will be verified by an admin before you can receive bookings.";
+      setError(successMessage);
       // Redirect after a delay
-      setTimeout(() => router.push("/login"), 4000);
+      setTimeout(() => router.push("/login"), isAdminEmail ? 2000 : 4000);
     } catch (err: any) {
       console.error("Registration error:", err);
       if (err.code === "auth/email-already-in-use") {

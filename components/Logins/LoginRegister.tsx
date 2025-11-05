@@ -22,8 +22,9 @@ const LoginPage = () => {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Require email verification
-      if (!user.emailVerified) {
+      // Require email verification (skip for admin during development)
+      const isAdminEmail = email === "admin@admin.com";
+      if (!user.emailVerified && !isAdminEmail) {
         setError("Please verify your email before logging in. Check your inbox for a verification link.");
         setLoading(false);
         return;
