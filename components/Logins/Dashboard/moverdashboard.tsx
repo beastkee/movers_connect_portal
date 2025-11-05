@@ -45,21 +45,10 @@ const MoverDashboard: React.FC = () => {
   const auth = typeof window !== "undefined" ? getAuth() : null;
   const user = auth?.currentUser;
   const router = useRouter();
-  const [isRedirecting, setIsRedirecting] = useState(false);
-
-  // Block admin from accessing mover dashboard
-  useEffect(() => {
-    if (!user || isRedirecting) return;
-    const adminEmails = ["admin@admin.com", "admin@moversconnect.com", "beastkee@example.com"];
-    if (adminEmails.includes(user.email || "")) {
-      setIsRedirecting(true);
-      router.push("/admin");
-    }
-  }, [user, router, isRedirecting]);
 
   // Fetch bookings for this mover
   useEffect(() => {
-    if (!user || isRedirecting) return;
+    if (!user) return;
     
     const q = query(collection(db, "bookings"), where("moverId", "==", user.uid));
     const unsubscribe = onSnapshot(q, (snapshot: any) => {

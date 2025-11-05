@@ -49,20 +49,24 @@ const AdminDashboard: React.FC = () => {
 
   useEffect(() => {
     // Wait for auth to be ready
-    if (!user) return;
+    if (!user) {
+      router.push("/adminlogin");
+      return;
+    }
     
     // Check if user is admin
     if (!adminEmails.includes(user.email || "")) {
       alert("Access denied. Admin only.");
-      router.push("/");
+      router.push("/adminlogin");
       return;
     }
 
     fetchMovers();
     fetchClients();
-  }, [user]);
+  }, [user, router]);
 
   const fetchMovers = async () => {
+    if (!user) return; // Safety check
     setLoading(true);
     try {
       const moversQuery = collectionGroup(db, "movers");
@@ -98,6 +102,7 @@ const AdminDashboard: React.FC = () => {
   };
 
   const fetchClients = async () => {
+    if (!user) return; // Safety check
     try {
       const clientsQuery = collectionGroup(db, "clients");
       const snapshot = await getDocs(clientsQuery);
@@ -128,6 +133,11 @@ const AdminDashboard: React.FC = () => {
     mover: MoverData,
     status: "approved" | "rejected"
   ) => {
+    if (!user) {
+      alert("Session expired. Please login again.");
+      return;
+    }
+
     try {
       const moverRef = doc(db, "users", mover.uid, "movers", mover.id);
       await updateDoc(moverRef, {
@@ -137,7 +147,7 @@ const AdminDashboard: React.FC = () => {
       });
 
       alert(`Mover ${status === "approved" ? "approved" : "rejected"} successfully!`);
-      fetchMovers(); // Refresh list
+      await fetchMovers(); // Refresh list
     } catch (error) {
       console.error("Error updating verification status:", error);
       alert("Failed to update verification status");
@@ -145,6 +155,11 @@ const AdminDashboard: React.FC = () => {
   };
 
   const handleDeleteMover = async (mover: MoverData) => {
+    if (!user) {
+      alert("Session expired. Please login again.");
+      return;
+    }
+
     if (!confirm(`Are you sure you want to delete ${mover.companyName}? This action cannot be undone.`)) {
       return;
     }
@@ -153,7 +168,7 @@ const AdminDashboard: React.FC = () => {
       const moverRef = doc(db, "users", mover.uid, "movers", mover.id);
       await deleteDoc(moverRef);
       alert("Mover deleted successfully!");
-      fetchMovers();
+      await fetchMovers();
     } catch (error) {
       console.error("Error deleting mover:", error);
       alert("Failed to delete mover");
@@ -161,6 +176,11 @@ const AdminDashboard: React.FC = () => {
   };
 
   const handleDeleteClient = async (client: ClientData) => {
+    if (!user) {
+      alert("Session expired. Please login again.");
+      return;
+    }
+
     if (!confirm(`Are you sure you want to delete ${client.name}? This action cannot be undone.`)) {
       return;
     }
@@ -169,7 +189,7 @@ const AdminDashboard: React.FC = () => {
       const clientRef = doc(db, "users", client.uid, "clients", client.id);
       await deleteDoc(clientRef);
       alert("Client deleted successfully!");
-      fetchClients();
+      await fetchClients();
     } catch (error) {
       console.error("Error deleting client:", error);
       alert("Failed to delete client");
@@ -177,7 +197,10 @@ const AdminDashboard: React.FC = () => {
   };
 
   const handleSaveNotes = async () => {
-    if (!showNotesModal.mover) return;
+    if (!showNotesModal.mover || !user) {
+      alert("Session expired. Please login again.");
+      return;
+    }
 
     setSavingNotes(true);
     try {
@@ -191,7 +214,7 @@ const AdminDashboard: React.FC = () => {
       alert("Notes saved successfully!");
       setShowNotesModal({ open: false, mover: null });
       setAdminNotes("");
-      fetchMovers();
+      await fetchMovers();
     } catch (error) {
       console.error("Error saving notes:", error);
       alert("Failed to save notes");

@@ -44,21 +44,10 @@ const ClientDashboard: React.FC = () => {
   const auth = typeof window !== "undefined" ? getAuth() : null;
   const user = auth?.currentUser;
   const router = useRouter();
-  const [isRedirecting, setIsRedirecting] = useState(false);
-
-  // Block admin from accessing client dashboard
-  useEffect(() => {
-    if (!user || isRedirecting) return;
-    const adminEmails = ["admin@admin.com", "admin@moversconnect.com", "beastkee@example.com"];
-    if (adminEmails.includes(user.email || "")) {
-      setIsRedirecting(true);
-      router.push("/admin");
-    }
-  }, [user, router, isRedirecting]);
 
   // Fetch my bookings (as client)
   useEffect(() => {
-    if (!user || isRedirecting) return;
+    if (!user) return;
     const fetchBookings = async () => {
       const q = query(collection(db, "bookings"), where("clientId", "==", user.uid));
       const snap = await getDocs(q);

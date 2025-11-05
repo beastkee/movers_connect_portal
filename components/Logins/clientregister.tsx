@@ -36,11 +36,8 @@ const ClientRegistration: React.FC = () => {
       );
       const user = userCredential.user;
 
-      // Send email verification (skip for admin during development)
-      const isAdminEmail = formData.email === "admin@admin.com";
-      if (!isAdminEmail) {
-        await sendEmailVerification(user);
-      }
+      // Send email verification
+      await sendEmailVerification(user);
 
       // Firebase Firestore: Store user data under the 'clients' subcollection of the 'users' collection
       await setDoc(doc(db, "users", user.uid, "clients", user.uid), {
@@ -50,12 +47,9 @@ const ClientRegistration: React.FC = () => {
         createdAt: new Date(),
       });
 
-      const successMessage = isAdminEmail 
-        ? "Admin account created successfully! You can login immediately."
-        : "Registration successful! Please check your email and verify your account before logging in.";
-      setMessage(successMessage);
+      setMessage("Registration successful! Please check your email and verify your account before logging in.");
       setFormData({ name: "", number: "", email: "", password: "" }); // Reset form
-      setTimeout(() => router.push("/login"), isAdminEmail ? 2000 : 4000); // Redirect faster for admin
+      setTimeout(() => router.push("/login"), 4000);
     } catch (err: any) {
       setError(err.message || "Registration failed. Please try again.");
     } finally {
