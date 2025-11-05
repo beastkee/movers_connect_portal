@@ -58,15 +58,18 @@ const ClientDashboard: React.FC = () => {
     if (myBookings.length > 0) fetchReviews();
   }, [myBookings]);
 
-  // Fetch quotes for this client
+  // Fetch quotes for this client (Real-time)
   useEffect(() => {
     if (!user) return;
-    const fetchQuotes = async () => {
-      const q = query(collection(db, "quotes"), where("clientId", "==", user.uid));
-      const snap = await getDocs(q);
-      setQuotes(snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() })));
-    };
-    fetchQuotes();
+    
+    const q = query(collection(db, "quotes"), where("clientId", "==", user.uid));
+    const unsubscribe = onSnapshot(q, (snapshot: any) => {
+      setQuotes(snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() })));
+    }, (error: any) => {
+      console.error("Error fetching quotes:", error);
+    });
+    
+    return () => unsubscribe();
   }, [user]);
   // Review submission handler
   const handleReviewSubmit = async (e: React.FormEvent) => {

@@ -12,6 +12,7 @@ interface ClientRequest {
   contact: string;
   description: string;
   date: string;
+  clientId?: string; // Add optional clientId field
 }
 
 const MoverDashboard: React.FC = () => {
@@ -51,10 +52,17 @@ const MoverDashboard: React.FC = () => {
   // Fetch client requests
   useEffect(() => {
     const unsubscribe = onSnapshot(collectionGroup(db, "clients"), (snapshot: any) => {
-      const reqs: ClientRequest[] = snapshot.docs.map((doc: any) => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const reqs: ClientRequest[] = snapshot.docs.map((doc: any) => {
+        // Extract clientId from the document path (e.g., users/{clientId}/clients/{docId})
+        const pathParts = doc.ref.path.split('/');
+        const clientId = pathParts[1]; // Get the user ID from the path
+        
+        return {
+          id: doc.id,
+          clientId, // Add the extracted clientId
+          ...doc.data()
+        };
+      });
       setRequests(reqs);
     }, (error: any) => {
       console.error("Error fetching client requests:", error);
@@ -159,13 +167,19 @@ const MoverDashboard: React.FC = () => {
     e.preventDefault();
     if (!quoteModal.request || !user) return;
     
+    if (!quoteModal.request.clientId) {
+      alert("Cannot send quote: Client information not available.");
+      return;
+    }
+    
     try {
       // Save quote to Firestore
       await addDoc(collection(db, "quotes"), {
         requestId: quoteModal.request.id,
-        clientId: quoteModal.request.id, // You might need to adjust this based on your data structure
+        clientId: quoteModal.request.clientId, // Use the extracted clientId
         moverId: user.uid,
-        moverName: user.email?.split('@')[0] || "Mover", // Extract name from email or use default
+        moverName: user.email?.split('@')[0] || "Mover",
+        moverEmail: user.email,
         amount: parseFloat(quoteAmount),
         notes: quoteNotes,
         status: "pending",
