@@ -23,9 +23,15 @@ Mover registration is now **instant** (~2 seconds) regardless of file uploads!
 
 ## Admin Access Setup
 
-**Currently configured admin emails:**
+**Default Admin Account (Testing):**
+- **Email:** `admin@admin.com`
+- **Password:** `admin123`
+
+**Other configured admin emails:**
 - `admin@moversconnect.com`
 - `beastkee@example.com`
+
+⚠️ **IMPORTANT:** Change the default admin credentials before production deployment!
 
 **To add your email as admin:**
 1. Open `pages/admin.tsx`
@@ -78,3 +84,28 @@ Access admin dashboard at: `/admin`
 ✅ **Security maintained** - admin approval required for transactions
 ✅ **Swift verification** - admin can bulk-process applications
 ✅ **Audit trail** - all approvals tracked with timestamps
+
+## 🚀 Quick Setup - Creating Admin Account
+
+### Option 1: Register via UI (Recommended)
+1. Go to your app's register page
+2. Register as a **Client** (not mover) with:
+   - Email: `admin@admin.com`
+   - Password: `admin123`
+3. Login with these credentials
+4. Navigate to `/admin` page
+5. You now have admin access!
+
+### Option 2: Register as Mover
+You can also register as a mover with `admin@admin.com` - the system checks the email, not the account type.
+
+### Accessing Admin Dashboard
+1. Login with `admin@admin.com` / `admin123`
+2. Go to `/admin` URL directly:
+   - Local: `http://localhost:3000/admin`
+   - Production: `https://your-app.vercel.app/admin`
+3. Start approving/rejecting movers!
+
+---
+
+**Note:** This is a development/testing account. Change credentials before production!

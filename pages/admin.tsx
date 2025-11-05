@@ -25,7 +25,11 @@ const AdminDashboard: React.FC = () => {
   const router = useRouter();
 
   // Admin emails - replace with your admin email(s)
-  const adminEmails = ["admin@moversconnect.com", "beastkee@example.com"];
+  const adminEmails = [
+    "admin@admin.com",           // Default admin for testing
+    "admin@moversconnect.com", 
+    "beastkee@example.com"
+  ];
 
   useEffect(() => {
     // Check if user is admin
