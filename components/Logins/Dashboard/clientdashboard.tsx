@@ -30,6 +30,8 @@ const ClientDashboard: React.FC = () => {
   const [reviewSuccess, setReviewSuccess] = useState<string | null>(null);
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [moverReviews, setMoverReviews] = useState<Record<string, Review[]>>({});
+  const [quotes, setQuotes] = useState<any[]>([]);
+  const [showQuotes, setShowQuotes] = useState(false);
   const auth = typeof window !== "undefined" ? getAuth() : null;
   const user = auth?.currentUser;
   // Fetch my bookings (as client)
@@ -55,6 +57,17 @@ const ClientDashboard: React.FC = () => {
     };
     if (myBookings.length > 0) fetchReviews();
   }, [myBookings]);
+
+  // Fetch quotes for this client
+  useEffect(() => {
+    if (!user) return;
+    const fetchQuotes = async () => {
+      const q = query(collection(db, "quotes"), where("clientId", "==", user.uid));
+      const snap = await getDocs(q);
+      setQuotes(snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() })));
+    };
+    fetchQuotes();
+  }, [user]);
   // Review submission handler
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -339,6 +352,89 @@ const ClientDashboard: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Action Button */}
+        <div className="mb-6">
+          <button
+            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+            onClick={() => setShowQuotes((prev) => !prev)}
+          >
+            💰 {showQuotes ? "Hide Quotes" : "View Received Quotes"} ({quotes.length})
+          </button>
+        </div>
+
+        {/* Quotes Section */}
+        {showQuotes && (
+          <div className="mb-8 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold">📬 Received Quotes</h2>
+              <span className="bg-green-500/20 text-green-300 px-4 py-2 rounded-full text-sm font-semibold">
+                {quotes.length} Quotes
+              </span>
+            </div>
+            
+            {quotes.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-400 text-lg mb-2">No quotes received yet</p>
+                <p className="text-gray-500 text-sm">Movers will send you quotes for your requests</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {quotes.map((quote) => (
+                  <div key={quote.id} className="bg-white/5 border border-white/10 rounded-lg p-5 hover:bg-white/10 transition-colors">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-green-500/20 w-12 h-12 rounded-full flex items-center justify-center">
+                          <span className="text-2xl">🚚</span>
+                        </div>
+                        <div>
+                          <p className="font-semibold text-lg">{quote.moverName || 'Mover'}</p>
+                          <p className="text-xs text-gray-400">
+                            {quote.createdAt ? new Date(quote.createdAt.seconds * 1000).toLocaleDateString() : 'Recent'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-2xl font-bold text-green-400">${quote.amount}</p>
+                        <p className="text-xs text-gray-400">Quote Amount</p>
+                      </div>
+                    </div>
+                    
+                    {quote.notes && (
+                      <div className="mb-4 p-3 bg-white/5 rounded-lg">
+                        <p className="text-sm text-gray-300">
+                          <span className="font-semibold text-purple-300">📝 Notes: </span>
+                          {quote.notes}
+                        </p>
+                      </div>
+                    )}
+                    
+                    <div className="flex gap-2">
+                      <button
+                        className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 rounded-lg font-semibold transition-all shadow-lg"
+                        onClick={() => {
+                          alert('Quote accepted! Booking confirmed.');
+                          // Here you would update the quote status in Firestore
+                        }}
+                      >
+                        ✓ Accept Quote
+                      </button>
+                      <button
+                        className="flex-1 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white px-4 py-2 rounded-lg font-semibold transition-all shadow-lg"
+                        onClick={() => {
+                          alert('Quote declined.');
+                          // Here you would update the quote status in Firestore
+                        }}
+                      >
+                        ✗ Decline
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Search Bar */}
         <div className="mb-8">
           <div className="relative">

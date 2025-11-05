@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { db } from "@/firebase/firebaseConfig";
-import { collectionGroup, onSnapshot, doc, getDoc, collection, query, where, updateDoc } from "firebase/firestore";
+import { collectionGroup, onSnapshot, doc, getDoc, collection, query, where, updateDoc, addDoc, Timestamp } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getMoverReviews } from "@/firebase/review";
 import type { Review } from "@/types/review";
@@ -115,19 +115,28 @@ const MoverDashboard: React.FC = () => {
     e.preventDefault();
     if (!quoteModal.request || !user) return;
     
-    // Here you would add the quote to Firestore
-    console.log("Quote submitted:", {
-      requestId: quoteModal.request.id,
-      amount: quoteAmount,
-      notes: quoteNotes,
-      moverId: user.uid,
-    });
-    
-    // Reset and close
-    setQuoteModal({ open: false, request: null });
-    setQuoteAmount("");
-    setQuoteNotes("");
-    alert("Quote sent successfully!");
+    try {
+      // Save quote to Firestore
+      await addDoc(collection(db, "quotes"), {
+        requestId: quoteModal.request.id,
+        clientId: quoteModal.request.id, // You might need to adjust this based on your data structure
+        moverId: user.uid,
+        moverName: user.email?.split('@')[0] || "Mover", // Extract name from email or use default
+        amount: parseFloat(quoteAmount),
+        notes: quoteNotes,
+        status: "pending",
+        createdAt: Timestamp.now(),
+      });
+      
+      // Reset and close
+      setQuoteModal({ open: false, request: null });
+      setQuoteAmount("");
+      setQuoteNotes("");
+      alert("Quote sent successfully!");
+    } catch (error) {
+      console.error("Error sending quote:", error);
+      alert("Failed to send quote. Please try again.");
+    }
   };
 
   // Fetch mover credentials from Firestore
