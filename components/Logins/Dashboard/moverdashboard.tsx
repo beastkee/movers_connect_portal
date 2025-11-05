@@ -92,6 +92,8 @@ const MoverDashboard: React.FC = () => {
         if (docSnap.exists()) {
           const data = docSnap.data();
           setIsAvailable(data.isAvailable !== false); // Default to true if not set
+          // Also fetch credentials here
+          setCredentials(data.credentials || []);
         }
       } catch (error) {
         console.error("Error fetching availability:", error);
@@ -253,6 +255,47 @@ const MoverDashboard: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Credentials Section - Always Visible */}
+        <div className="mb-8 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 shadow-xl">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold">📄 My Credentials</h2>
+            <span className="bg-blue-500/20 text-blue-300 px-4 py-2 rounded-full text-sm font-semibold">
+              {credentials.length} File{credentials.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+          
+          {credentials.length === 0 ? (
+            <div className="text-center py-8 border-2 border-dashed border-white/20 rounded-lg">
+              <p className="text-gray-400 text-lg mb-2">📋 No credentials uploaded yet</p>
+              <p className="text-gray-500 text-sm mb-4">Upload your professional documents during registration or profile update</p>
+              <p className="text-xs text-gray-600">Examples: License, Insurance, Certifications</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {credentials.map((url, idx) => (
+                <a
+                  key={idx}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-white/5 border border-white/10 rounded-lg p-4 hover:bg-white/10 hover:border-blue-500/50 transition-all flex items-center gap-3 group"
+                >
+                  <div className="bg-blue-500/20 w-12 h-12 rounded-lg flex items-center justify-center">
+                    <span className="text-2xl">📄</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold group-hover:text-blue-300 transition-colors">
+                      Credential {idx + 1}
+                    </p>
+                    <p className="text-xs text-gray-400">Click to view/download</p>
+                  </div>
+                  <span className="text-blue-400 text-xl">→</span>
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Mobile Availability Toggle */}
         <div className="md:hidden mb-6">
           <button
@@ -288,15 +331,6 @@ const MoverDashboard: React.FC = () => {
                 {pendingCount}
               </span>
             )}
-          </button>
-          <button
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all"
-            onClick={() => {
-              setShowCreds((prev) => !prev);
-              if (!showCreds) fetchCredentials();
-            }}
-          >
-            📄 {showCreds ? "Hide My Credentials" : "Show My Credentials"}
           </button>
           <button
             className="bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white px-6 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all"
@@ -398,42 +432,6 @@ const MoverDashboard: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-        {showCreds && (
-          <div className="mb-8 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 shadow-xl">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold">My Uploaded Credentials</h2>
-              <span className="bg-blue-500/20 text-blue-300 px-4 py-2 rounded-full text-sm font-semibold">
-                {credentials.length} Files
-              </span>
-            </div>
-            {loadingCreds ? (
-              <p className="text-gray-400 text-center py-8">Loading...</p>
-            ) : credentials.length === 0 ? (
-              <p className="text-gray-400 text-center py-8">No credentials uploaded.</p>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {credentials.map((url, idx) => (
-                  <a
-                    key={idx}
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-white/5 border border-white/10 rounded-lg p-4 hover:bg-white/10 hover:border-blue-500/50 transition-all flex items-center gap-3 group"
-                  >
-                    <div className="bg-blue-500/20 w-10 h-10 rounded-lg flex items-center justify-center">
-                      <span className="text-xl">📄</span>
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-semibold group-hover:text-blue-300 transition-colors">Document {idx + 1}</p>
-                      <p className="text-xs text-gray-400">Click to view</p>
-                    </div>
-                    <span className="text-blue-400">→</span>
-                  </a>
                 ))}
               </div>
             )}
