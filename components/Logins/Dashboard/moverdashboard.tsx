@@ -19,6 +19,11 @@ const MoverDashboard: React.FC = () => {
   const [loadingCreds, setLoadingCreds] = useState(false);
   const [bookings, setBookings] = useState<any[]>([]);
   const [showBookings, setShowBookings] = useState(false);
+  const [bookingFilter, setBookingFilter] = useState<"all" | "pending" | "accepted" | "declined">("all");
+  const [interestedRequests, setInterestedRequests] = useState<Set<string>>(new Set());
+  const [quoteModal, setQuoteModal] = useState<{ open: boolean; request: ClientRequest | null }>({ open: false, request: null });
+  const [quoteAmount, setQuoteAmount] = useState<string>("");
+  const [quoteNotes, setQuoteNotes] = useState<string>("");
   const auth = typeof window !== "undefined" ? getAuth() : null;
   const user = auth?.currentUser;
   // Fetch bookings for this mover
@@ -53,6 +58,47 @@ const MoverDashboard: React.FC = () => {
   const filteredRequests = requests.filter((request) =>
     request.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Filter bookings by status
+  const filteredBookings = bookingFilter === "all" 
+    ? bookings 
+    : bookings.filter(b => b.status === bookingFilter);
+
+  // Count pending bookings
+  const pendingCount = bookings.filter(b => b.status === "pending").length;
+
+  // Handle express interest
+  const handleExpressInterest = (requestId: string) => {
+    setInterestedRequests(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(requestId)) {
+        newSet.delete(requestId);
+      } else {
+        newSet.add(requestId);
+      }
+      return newSet;
+    });
+  };
+
+  // Handle quote submission
+  const handleQuoteSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quoteModal.request || !user) return;
+    
+    // Here you would add the quote to Firestore
+    console.log("Quote submitted:", {
+      requestId: quoteModal.request.id,
+      amount: quoteAmount,
+      notes: quoteNotes,
+      moverId: user.uid,
+    });
+    
+    // Reset and close
+    setQuoteModal({ open: false, request: null });
+    setQuoteAmount("");
+    setQuoteNotes("");
+    alert("Quote sent successfully!");
+  };
 
   // Fetch mover credentials from Firestore
   const fetchCredentials = async () => {
@@ -98,10 +144,15 @@ const MoverDashboard: React.FC = () => {
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-4 mb-8">
           <button
-            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all relative"
             onClick={() => setShowBookings((prev) => !prev)}
           >
             📋 {showBookings ? "Hide My Bookings" : "Show My Bookings"} ({bookings.length})
+            {pendingCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center animate-pulse">
+                {pendingCount}
+              </span>
+            )}
           </button>
           <button
             className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all"
@@ -121,11 +172,56 @@ const MoverDashboard: React.FC = () => {
                 {bookings.length} Total
               </span>
             </div>
-            {bookings.length === 0 ? (
-              <p className="text-gray-400 text-center py-8">No bookings yet.</p>
+            
+            {/* Filter Buttons */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              <button
+                onClick={() => setBookingFilter("all")}
+                className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                  bookingFilter === "all"
+                    ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white"
+                    : "bg-white/5 text-gray-300 hover:bg-white/10"
+                }`}
+              >
+                All ({bookings.length})
+              </button>
+              <button
+                onClick={() => setBookingFilter("pending")}
+                className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                  bookingFilter === "pending"
+                    ? "bg-gradient-to-r from-yellow-600 to-orange-600 text-white"
+                    : "bg-white/5 text-gray-300 hover:bg-white/10"
+                }`}
+              >
+                Pending ({bookings.filter(b => b.status === "pending").length})
+              </button>
+              <button
+                onClick={() => setBookingFilter("accepted")}
+                className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                  bookingFilter === "accepted"
+                    ? "bg-gradient-to-r from-green-600 to-emerald-600 text-white"
+                    : "bg-white/5 text-gray-300 hover:bg-white/10"
+                }`}
+              >
+                Accepted ({bookings.filter(b => b.status === "accepted").length})
+              </button>
+              <button
+                onClick={() => setBookingFilter("declined")}
+                className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                  bookingFilter === "declined"
+                    ? "bg-gradient-to-r from-red-600 to-rose-600 text-white"
+                    : "bg-white/5 text-gray-300 hover:bg-white/10"
+                }`}
+              >
+                Declined ({bookings.filter(b => b.status === "declined").length})
+              </button>
+            </div>
+
+            {filteredBookings.length === 0 ? (
+              <p className="text-gray-400 text-center py-8">No bookings in this category.</p>
             ) : (
               <div className="space-y-3">
-                {bookings.map((b, idx) => (
+                {filteredBookings.map((b, idx) => (
                   <div key={idx} className="bg-white/5 border border-white/10 rounded-lg p-4 hover:bg-white/10 transition-colors">
                     <div className="flex flex-wrap items-center justify-between gap-4">
                       <div className="flex-1">
@@ -265,8 +361,79 @@ const MoverDashboard: React.FC = () => {
                     <span><strong>Date:</strong> {new Date(request.date).toLocaleDateString()}</span>
                   </p>
                 </div>
+                
+                {/* Action Buttons */}
+                <div className="mt-4 flex gap-2">
+                  <button
+                    onClick={() => handleExpressInterest(request.id)}
+                    className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all shadow-lg ${
+                      interestedRequests.has(request.id)
+                        ? "bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white"
+                        : "bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white"
+                    }`}
+                  >
+                    {interestedRequests.has(request.id) ? "⭐ Interested" : "👋 Express Interest"}
+                  </button>
+                  <button
+                    className="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg font-semibold transition-all shadow-lg"
+                    title="Send Quote"
+                    onClick={() => setQuoteModal({ open: true, request })}
+                  >
+                    💰
+                  </button>
+                </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Quote Modal */}
+        {quoteModal.open && quoteModal.request && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-gradient-to-br from-gray-900 to-black border border-white/20 text-white p-8 rounded-2xl shadow-2xl w-full max-w-md relative">
+              <button
+                className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl font-bold transition-colors"
+                onClick={() => setQuoteModal({ open: false, request: null })}
+              >
+                ×
+              </button>
+              <div className="text-center mb-6">
+                <div className="bg-green-500/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-4xl">💰</span>
+                </div>
+                <h2 className="text-2xl font-bold">Send Quote</h2>
+                <p className="text-gray-400 mt-2">To: {quoteModal.request.name}</p>
+              </div>
+              <form onSubmit={handleQuoteSubmit} className="space-y-5">
+                <div>
+                  <label className="block font-semibold mb-2 text-green-300">💵 Quote Amount</label>
+                  <input
+                    type="number"
+                    value={quoteAmount}
+                    onChange={e => setQuoteAmount(e.target.value)}
+                    placeholder="Enter amount (e.g., 5000)"
+                    required
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-green-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold mb-2 text-green-300">📝 Additional Notes</label>
+                  <textarea
+                    value={quoteNotes}
+                    onChange={e => setQuoteNotes(e.target.value)}
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-green-500 focus:outline-none resize-none"
+                    rows={4}
+                    placeholder="Include details about services, timeline, or special offers..."
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+                >
+                  ✓ Send Quote
+                </button>
+              </form>
+            </div>
           </div>
         )}
       </div>
