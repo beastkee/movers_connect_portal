@@ -55,6 +55,21 @@ const MoverDashboard: React.FC = () => {
       router.replace("/admin");
       return;
     }
+
+    // Verify user is actually a mover in the database
+    const verifyMoverAccess = async () => {
+      try {
+        const moverDoc = await getDoc(doc(db, "users", user.uid, "movers", user.uid));
+        if (!moverDoc.exists()) {
+          alert("Access denied. You are not registered as a mover.");
+          router.replace("/login");
+        }
+      } catch (error) {
+        console.error("Error verifying mover access:", error);
+      }
+    };
+    
+    verifyMoverAccess();
   }, [user, router]);
 
   // Fetch bookings for this mover

@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from "react";
 import { db } from "@/firebase/firebaseConfig";
-import { collectionGroup, onSnapshot, QuerySnapshot, DocumentData, collection, addDoc, Timestamp, getDocs, query, where, deleteDoc, doc } from "firebase/firestore";
+import { collectionGroup, onSnapshot, QuerySnapshot, DocumentData, collection, addDoc, Timestamp, getDocs, query, where, deleteDoc, doc, getDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { addReview, getMoverReviews } from "@/firebase/review";
 import type { Review } from "@/types/review";
@@ -57,6 +56,21 @@ const ClientDashboard: React.FC = () => {
       router.replace("/admin");
       return;
     }
+
+    // Verify user is actually a client in the database
+    const verifyClientAccess = async () => {
+      try {
+        const clientDoc = await getDoc(doc(db, "users", user.uid, "clients", user.uid));
+        if (!clientDoc.exists()) {
+          alert("Access denied. You are not registered as a client.");
+          router.replace("/login");
+        }
+      } catch (error) {
+        console.error("Error verifying client access:", error);
+      }
+    };
+    
+    verifyClientAccess();
   }, [user, router]);
 
   // Fetch my bookings (as client) - Real-time
