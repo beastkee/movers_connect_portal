@@ -26,6 +26,9 @@ Mover registration is now **instant** (~2 seconds) regardless of file uploads!
 **Default Admin Account (Testing):**
 - **Email:** `admin@admin.com`
 - **Password:** `admin123`
+- ✅ **No email verification required**
+- ✅ **Auto-approved verification status**
+- ✅ **Instant full access**
 
 **Other configured admin emails:**
 - `admin@moversconnect.com`
