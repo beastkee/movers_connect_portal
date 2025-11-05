@@ -9,9 +9,13 @@ import { useRouter } from "next/router";
 
 interface Mover {
   id: string;
-  name: string;
-  contact: string;
-  status: "available" | "accepted" | "declined";
+  companyName: string;
+  serviceArea: string;
+  contactNumber: string;
+  email: string;
+  status: "available" | "unavailable";
+  verificationStatus: "pending" | "approved" | "rejected";
+  uid?: string;
 }
 
 
@@ -289,10 +293,30 @@ const ClientDashboard: React.FC = () => {
   useEffect(() => {
     // Listen for all movers in nested subcollections using collectionGroup
     const unsub = onSnapshot(collectionGroup(db, "movers"), (snapshot: any) => {
-      const movs: Mover[] = snapshot.docs.map((doc: any) => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const movs: Mover[] = snapshot.docs
+        .map((doc: any) => {
+          const data = doc.data();
+          // Extract userId from document path (users/{userId}/movers/{docId})
+          const pathParts = doc.ref.path.split('/');
+          const userId = pathParts[1];
+          
+          return {
+            id: doc.id,
+            uid: userId,
+            companyName: data.companyName || "N/A",
+            serviceArea: data.serviceArea || "N/A",
+            contactNumber: data.contactNumber || "N/A",
+            email: data.email || "N/A",
+            status: data.status || "available",
+            verificationStatus: data.verificationStatus || "pending",
+          };
+        })
+        // Only show approved and available movers to clients
+        .filter((mover: Mover) => 
+          mover.verificationStatus === "approved" && 
+          mover.status === "available"
+        );
+      
       setMovers(movs);
     });
     return () => unsub();
@@ -316,8 +340,8 @@ const ClientDashboard: React.FC = () => {
       await addDoc(collection(db, "bookings"), {
         clientId: user.uid,
         clientEmail: user.email,
-        moverId: selectedMover.id,
-        moverName: selectedMover.name,
+        moverId: selectedMover.uid, // Use the mover's user ID
+        moverName: selectedMover.companyName,
         date: bookingDate,
         time: bookingTime,
         status: "pending",
@@ -333,11 +357,14 @@ const ClientDashboard: React.FC = () => {
     }
   };
 
+  // Open message modal and fetch messages
+
   const renderMovers = (status: Mover["status"]) => {
     const filteredMovers = movers.filter(
       (mover) =>
         mover.status === status &&
-        mover.name?.toLowerCase().includes(searchQuery.toLowerCase())
+        (mover.companyName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+         mover.serviceArea?.toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
     if (filteredMovers.length === 0) {
@@ -363,19 +390,21 @@ const ClientDashboard: React.FC = () => {
                 className={`px-3 py-1 rounded-full text-xs font-semibold ${
                   status === "available"
                     ? "bg-green-500/20 text-green-300"
-                    : status === "accepted"
-                    ? "bg-blue-500/20 text-blue-300"
                     : "bg-red-500/20 text-red-300"
                 }`}
               >
                 {status.charAt(0).toUpperCase() + status.slice(1)}
               </span>
             </div>
-            <h3 className="text-xl font-bold text-white mb-3">{mover.name}</h3>
+            <h3 className="text-xl font-bold text-white mb-3">{mover.companyName}</h3>
             <div className="space-y-2 mb-4">
               <p className="text-sm text-gray-300 flex items-center gap-2">
+                <span className="text-purple-400">📍</span>
+                <strong>Service Area:</strong> {mover.serviceArea}
+              </p>
+              <p className="text-sm text-gray-300 flex items-center gap-2">
                 <span className="text-purple-400">📞</span>
-                <strong>Contact:</strong> {mover.contact}
+                <strong>Contact:</strong> {mover.contactNumber}
               </p>
             </div>
             {status === "available" && (
@@ -523,7 +552,7 @@ const ClientDashboard: React.FC = () => {
               <div className="bg-purple-500/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-4xl">📅</span>
               </div>
-              <h2 className="text-2xl font-bold">Book {selectedMover.name}</h2>
+              <h2 className="text-2xl font-bold">Book {selectedMover.companyName}</h2>
               <p className="text-gray-400 mt-2">Schedule your moving service</p>
             </div>
             <form onSubmit={handleBooking} className="space-y-5">
@@ -571,32 +600,56 @@ const ClientDashboard: React.FC = () => {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-3xl font-bold">✨ Available Movers</h2>
             <span className="bg-green-500/20 text-green-300 px-4 py-2 rounded-full text-sm font-semibold">
-              {movers.filter(m => m.status === "available").length} Available
+              {movers.length} Available
             </span>
           </div>
-          {renderMovers("available")}
-        </section>
-
-        {/* Accepted Movers Section */}
-        <section className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-3xl font-bold">✅ Accepted Requests</h2>
-            <span className="bg-blue-500/20 text-blue-300 px-4 py-2 rounded-full text-sm font-semibold">
-              {movers.filter(m => m.status === "accepted").length} Accepted
-            </span>
-          </div>
-          {renderMovers("accepted")}
-        </section>
-
-        {/* Declined Movers Section */}
-        <section>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-3xl font-bold">❌ Declined Requests</h2>
-            <span className="bg-red-500/20 text-red-300 px-4 py-2 rounded-full text-sm font-semibold">
-              {movers.filter(m => m.status === "declined").length} Declined
-            </span>
-          </div>
-          {renderMovers("declined")}
+          
+          {movers.length === 0 ? (
+            <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-12 text-center">
+              <p className="text-gray-400 text-lg">No approved movers available at the moment.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {movers
+                .filter((mover) =>
+                  searchQuery === "" ||
+                  mover.companyName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  mover.serviceArea?.toLowerCase().includes(searchQuery.toLowerCase())
+                )
+                .map((mover) => (
+                  <div
+                    key={mover.id}
+                    className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-lg border border-white/20 rounded-xl p-6 shadow-xl hover:shadow-2xl hover:scale-105 hover:border-purple-500/50 transform transition-all duration-300"
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="bg-purple-500/20 w-12 h-12 rounded-full flex items-center justify-center">
+                        <span className="text-2xl">🚚</span>
+                      </div>
+                      <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-500/20 text-green-300">
+                        Available
+                      </span>
+                    </div>
+                    <h3 className="text-xl font-bold text-white mb-3">{mover.companyName}</h3>
+                    <div className="space-y-2 mb-4">
+                      <p className="text-sm text-gray-300 flex items-center gap-2">
+                        <span className="text-purple-400">📍</span>
+                        <strong>Service Area:</strong> {mover.serviceArea}
+                      </p>
+                      <p className="text-sm text-gray-300 flex items-center gap-2">
+                        <span className="text-purple-400">📞</span>
+                        <strong>Contact:</strong> {mover.contactNumber}
+                      </p>
+                    </div>
+                    <button
+                      className="w-full mt-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-3 rounded-lg font-semibold transition-all shadow-lg hover:shadow-xl"
+                      onClick={() => handleBookClick(mover)}
+                    >
+                      📅 Book This Mover
+                    </button>
+                  </div>
+                ))}
+            </div>
+          )}
         </section>
       </div>
 
