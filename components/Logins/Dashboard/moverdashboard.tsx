@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { db } from "@/firebase/firebaseConfig";
-import { collectionGroup, onSnapshot, QuerySnapshot, DocumentData, doc, getDoc, collection, query, where, onSnapshot as onSnapshot2, updateDoc } from "firebase/firestore";
+import { collectionGroup, onSnapshot, doc, getDoc, collection, query, where, updateDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
 interface ClientRequest {
@@ -26,27 +26,34 @@ const MoverDashboard: React.FC = () => {
   const [quoteNotes, setQuoteNotes] = useState<string>("");
   const auth = typeof window !== "undefined" ? getAuth() : null;
   const user = auth?.currentUser;
+
   // Fetch bookings for this mover
   useEffect(() => {
     if (!user) return;
+    
     const q = query(collection(db, "bookings"), where("moverId", "==", user.uid));
-    const unsub = onSnapshot2(q, (snapshot: any) => {
+    const unsubscribe = onSnapshot(q, (snapshot: any) => {
       setBookings(snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() })));
+    }, (error: any) => {
+      console.error("Error fetching bookings:", error);
     });
-    return () => unsub();
+    
+    return () => unsubscribe();
   }, [user]);
 
-
+  // Fetch client requests
   useEffect(() => {
-    // Listen for all clients in nested subcollections using collectionGroup
-    const unsub = onSnapshot(collectionGroup(db, "clients"), (snapshot: any) => {
+    const unsubscribe = onSnapshot(collectionGroup(db, "clients"), (snapshot: any) => {
       const reqs: ClientRequest[] = snapshot.docs.map((doc: any) => ({
         id: doc.id,
         ...doc.data()
       }));
       setRequests(reqs);
+    }, (error: any) => {
+      console.error("Error fetching client requests:", error);
     });
-    return () => unsub();
+    
+    return () => unsubscribe();
   }, []);
 
   const [searchQuery, setSearchQuery] = useState<string>("");
