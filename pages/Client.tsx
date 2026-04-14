@@ -1,4 +1,4 @@
-import ClientPage from "@/components/Logins/client";
+import ClientPage from "@/components/Logins/clientRequestForm";
 
 const Clientpage = () => {
     return(

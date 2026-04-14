@@ -1,9 +1,11 @@
 import React, { useState } from "react";
+import { sendEmailVerification } from "firebase/auth";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/router";
 import { db, auth } from "@/firebase/firebaseConfig";
-import { collection, doc, setDoc } from "firebase/firestore";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc, getDoc } from "firebase/firestore";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { createUserWithEmailAndPassword, fetchSignInMethodsForEmail } from "firebase/auth";
 
 type FormData = {
   companyName: string;
@@ -13,42 +15,114 @@ type FormData = {
   password: string;
 };
 
-const Register: React.FC = () => {
+
+const MoverRegisterForm: React.FC = () => {
   const { register, handleSubmit, reset, formState } = useForm<FormData>();
   const { errors, isSubmitting } = formState;
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [credentialFiles, setCredentialFiles] = useState<FileList | null>(null);
+  const [uploadingCreds, setUploadingCreds] = useState(false);
+  const [registrationStep, setRegistrationStep] = useState<string>("");
   const router = useRouter();
 
+  const handleFormSubmit = handleSubmit(async (data) => {
+    await onSubmit(data);
+  });
+
   const onSubmit = async (data: FormData) => {
+    setUploadingCreds(true);
+    setError(null);
+    setSuccess(false);
     try {
-      // Create the user in Firebase Authentication
+      const normalizedEmail = data.email.trim().toLowerCase();
+
+      // Avoid throwing email-already-in-use by checking first.
+      const existingMethods = await fetchSignInMethodsForEmail(auth, normalizedEmail);
+      if (existingMethods.length > 0) {
+        setError("This email is already registered. Please log in or reset your password.");
+        setRegistrationStep("");
+        return;
+      }
+
+      // Create the user in Firebase Authentication (this will fail if email already exists)
+      setRegistrationStep("Creating account...");
       const userCredential = await createUserWithEmailAndPassword(
         auth,
-        data.email,
+        normalizedEmail,
         data.password
       );
       const user = userCredential.user;
 
-      // Save the user's details in Firestore
-      const userRef = doc(collection(db, "users", user.uid, "movers"));
+      // Check if this user is already registered as a client
+      const clientDoc = await getDoc(doc(db, "users", user.uid, "clients", user.uid));
+      if (clientDoc.exists()) {
+        // User is already a client, delete the auth account and show error
+        await user.delete();
+        setError("This account is already registered as a Client. Each user can only have one role. Please login as a client or use a different email.");
+        setUploadingCreds(false);
+        setRegistrationStep("");
+        return;
+      }
+
+      // Save the user's basic details in Firestore immediately
+      setRegistrationStep("Setting up profile...");
+      const userRef = doc(db, "users", user.uid, "movers", user.uid);
       await setDoc(userRef, {
         companyName: data.companyName,
         serviceArea: data.serviceArea,
         contactNumber: data.contactNumber,
-        email: data.email,
+        email: normalizedEmail,
+        credentials: [],
+        status: "available",
+        verificationStatus: "pending",
         createdAt: new Date(),
+      });
+
+      // Upload credentials in the background (non-blocking)
+      if (credentialFiles && credentialFiles.length > 0) {
+        setRegistrationStep(`Uploading ${credentialFiles.length} credential file(s)...`);
+        const storage = getStorage();
+        
+        // Start uploads but don't wait for them
+        Promise.all(
+          Array.from(credentialFiles).map(async (file) => {
+            const storageRef = ref(storage, `movers/${user.uid}/credentials/${file.name}`);
+            await uploadBytes(storageRef, file);
+            return await getDownloadURL(storageRef);
+          })
+        ).then(async (credentialUrls) => {
+          // Update credentials after upload completes
+          await setDoc(userRef, { credentials: credentialUrls }, { merge: true });
+        }).catch((err) => {
+          console.error("Error uploading credentials:", err);
+        });
+      }
+
+      // Send email verification (non-blocking)
+      sendEmailVerification(user).catch((err: any) => {
+        console.error("Error sending verification email:", err);
       });
 
       setSuccess(true);
       reset();
+      setCredentialFiles(null);
 
+      // Inform user about the verification process
+      setError("Registration successful! You can now login. Your credentials will be verified by an admin before you can receive bookings.");
       // Redirect after a delay
-      setTimeout(() => router.push("/login"), 2000);
+      setTimeout(() => router.push("/login"), 4000);
     } catch (err: any) {
       console.error("Registration error:", err);
-      setError(err.message || "Registration failed. Please try again.");
+      if (err?.code === "auth/email-already-in-use") {
+        setError("This email is already registered. Please log in or use a different email address.");
+      } else {
+        setError(err?.message || "Registration failed. Please try again.");
+      }
+      setRegistrationStep("");
+    } finally {
+      setUploadingCreds(false);
     }
   };
 
@@ -61,7 +135,39 @@ const Register: React.FC = () => {
         <h2 className="text-3xl font-extrabold text-center text-white mb-8">
           Register as a Mover
         </h2>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+  <form
+    onSubmit={(e) => {
+      e.preventDefault();
+      handleFormSubmit(e).catch((err) => {
+        console.error("Unhandled registration submit error:", err);
+        setError("Registration failed. Please try again.");
+        setUploadingCreds(false);
+        setRegistrationStep("");
+      });
+    }}
+    className="space-y-6"
+  >
+          {/* Credential Upload Field */}
+          <div>
+            <label className="block text-white font-medium mb-1">Upload Credentials (License, Insurance, etc.)</label>
+            <input
+              type="file"
+              multiple
+              onChange={e => setCredentialFiles(e.target.files)}
+              className="w-full px-6 py-2 bg-transparent border border-purple-400 rounded-xl text-white"
+              disabled={uploadingCreds}
+            />
+            {credentialFiles && credentialFiles.length > 0 && (
+              <p className="text-purple-200 mt-1 text-sm">
+                {credentialFiles.length} file(s) selected
+              </p>
+            )}
+            {uploadingCreds && registrationStep && (
+              <p className="text-yellow-300 mt-1 animate-pulse">
+                {registrationStep}
+              </p>
+            )}
+          </div>
           {/** Company Name Field */}
           <div>
             <input
@@ -160,4 +266,4 @@ const Register: React.FC = () => {
   );
 };
 
-export default Register;
+export default MoverRegisterForm;

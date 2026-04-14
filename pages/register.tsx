@@ -1,9 +1,9 @@
-import Register from "@/components/Logins/register";
+import MoverRegisterForm from "@/components/Logins/MoverRegisterForm";
 
 const RegisterPage = () => {
     return(
         <div>
-            <Register/>
+            <MoverRegisterForm/>
         </div>
     )
 };

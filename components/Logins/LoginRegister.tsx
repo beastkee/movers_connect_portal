@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/router";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/firebase/firebaseConfig"; // Import your Firebase auth instance
-import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/firebase/firebaseConfig"; // Import your Firestore db instance
 
 const LoginPage = () => {
@@ -29,16 +29,14 @@ const LoginPage = () => {
         return;
       }
 
-      // Query both the 'movers' and 'clients' subcollections for the user
+      // Determine role by checking docs under the authenticated UID path.
+      // This is resilient to email casing/format differences and password resets.
       const moversRef = collection(db, "users", user.uid, "movers");
       const clientsRef = collection(db, "users", user.uid, "clients");
 
-      const moverQuery = query(moversRef, where("email", "==", email));
-      const clientQuery = query(clientsRef, where("email", "==", email));
-
       const [moverSnapshot, clientSnapshot] = await Promise.all([
-        getDocs(moverQuery),
-        getDocs(clientQuery),
+        getDocs(moversRef),
+        getDocs(clientsRef),
       ]);
 
       if (!moverSnapshot.empty) {
@@ -48,7 +46,7 @@ const LoginPage = () => {
         // User found in the 'clients' subcollection
         router.push("/dashboardclient"); // Redirect to client dashboard
       } else {
-        setError("User not found in either movers or clients.");
+        setError("User profile not found. Please contact support.");
       }
     } catch (err: any) {
       setError(err.message || "Failed to log in. Please try again.");
@@ -105,6 +103,15 @@ const LoginPage = () => {
           >
             {loading ? "Logging in..." : "Log In"}
           </button>
+          
+          <div className="text-center">
+            <a
+              href="/forgot-password"
+              className="text-sm text-purple-400 hover:underline hover:text-purple-300"
+            >
+              Forgot Password?
+            </a>
+          </div>
         </form>
         <p className="text-center text-gray-400 mt-6">
           Don't have an account?{" "}

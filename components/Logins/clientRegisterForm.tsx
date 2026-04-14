@@ -2,9 +2,13 @@ import React, { useState } from "react";
 import { useRouter } from "next/router";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/firebase/firebaseConfig"; // Ensure Firebase is correctly configured
-import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  fetchSignInMethodsForEmail,
+  sendEmailVerification,
+} from "firebase/auth";
 
-const ClientRegistration: React.FC = () => {
+const ClientRegisterForm: React.FC = () => {
   const [formData, setFormData] = useState({
     name: "",
     number: "",
@@ -28,10 +32,19 @@ const ClientRegistration: React.FC = () => {
     setLoading(true);
 
     try {
+      const normalizedEmail = formData.email.trim().toLowerCase();
+
+      // Avoid email-already-in-use throw by checking first.
+      const existingMethods = await fetchSignInMethodsForEmail(auth, normalizedEmail);
+      if (existingMethods.length > 0) {
+        setError("This email is already registered. Please log in or reset your password.");
+        return;
+      }
+
       // Firebase Authentication: Create user (this will fail if email already exists)
       const userCredential = await createUserWithEmailAndPassword(
         auth,
-        formData.email,
+        normalizedEmail,
         formData.password
       );
       const user = userCredential.user;
@@ -53,7 +66,7 @@ const ClientRegistration: React.FC = () => {
       await setDoc(doc(db, "users", user.uid, "clients", user.uid), {
         name: formData.name,
         number: formData.number,
-        email: formData.email,
+        email: normalizedEmail,
         createdAt: new Date(),
       });
 
@@ -61,7 +74,11 @@ const ClientRegistration: React.FC = () => {
       setFormData({ name: "", number: "", email: "", password: "" }); // Reset form
       setTimeout(() => router.push("/login"), 4000);
     } catch (err: any) {
-      setError(err.message || "Registration failed. Please try again.");
+      if (err?.code === "auth/email-already-in-use") {
+        setError("This email is already registered. Please log in or reset your password.");
+      } else {
+        setError(err?.message || "Registration failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -73,7 +90,16 @@ const ClientRegistration: React.FC = () => {
         <h1 className="text-3xl font-extrabold text-center mb-6">
           Register as a Client
         </h1>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form
+          onSubmit={(e) => {
+            handleSubmit(e).catch((err) => {
+              console.error("Unhandled client registration error:", err);
+              setError("Registration failed. Please try again.");
+              setLoading(false);
+            });
+          }}
+          className="space-y-6"
+        >
           {error && (
             <p className="text-red-500 text-center font-medium">{error}</p>
           )}
@@ -153,4 +179,4 @@ const ClientRegistration: React.FC = () => {
   );
 };
 
-export default ClientRegistration;
+export default ClientRegisterForm;
