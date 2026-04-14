@@ -41,10 +41,10 @@ const LoginPage = () => {
 
       if (!moverSnapshot.empty) {
         // User found in the 'movers' subcollection
-        router.push("/mover"); // Redirect to mover dashboard
+        router.push("/mover-dashboard"); // Redirect to mover dashboard
       } else if (!clientSnapshot.empty) {
         // User found in the 'clients' subcollection
-        router.push("/dashboardclient"); // Redirect to client dashboard
+        router.push("/client-dashboard"); // Redirect to client dashboard
       } else {
         setError("User profile not found. Please contact support.");
       }
