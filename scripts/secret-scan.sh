@@ -10,7 +10,7 @@ if [[ -z "${staged_added_lines}" ]]; then
 fi
 
 # Common secret signatures. Adjust over time for your stack.
-secret_pattern='(AKIA[0-9A-Z]{16}|ASIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35}|sk_live_[0-9A-Za-z]+|ghp_[0-9A-Za-z]{20,}|xox[baprs]-[0-9A-Za-z-]{10,}|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|(?i)(api[_-]?key|secret|token|password)\s*[:=]\s*["'\''`][^"'\''`]{8,}["'\''`])'
+secret_pattern='(AKIA[0-9A-Z]{16}|ASIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35}|sk_live_[0-9A-Za-z]+|ghp_[0-9A-Za-z]{20,}|xox[baprs]-[0-9A-Za-z-]{10,}|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|(api[_-]?key|secret|token|password)\s*[:=]\s*["'\''`][^"'\''`]{8,}["'\''`])'
 
 if echo "${staged_added_lines}" | grep -E -i "${secret_pattern}" >/dev/null; then
   echo ""
