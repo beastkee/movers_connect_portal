@@ -1,10 +1,10 @@
-import ClientPage from "@/components/Logins/clientRequestForm";
+import ClientRequestForm from "@/components/Logins/ClientRequestForm";
 
-const Clientpage = () => {
+const ClientPage = () => {
     return(
         <div>
-            <ClientPage/>
+            <ClientRequestForm/>
         </div>
     )
 };
-export default Clientpage
+export default ClientPage

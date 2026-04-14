@@ -1,15 +1,15 @@
 import { useRouter } from "next/router";
 import { useState } from "react";
 
-const ChooseRole = () => {
+const RolesPage = () => {
   const router = useRouter();
   const [isDarkMode, setDarkMode] = useState(false);
 
   const handleRoleSelection = (role: "client" | "mover") => {
     if (role === "client") {
-      router.push("/reg");
+      router.push("/client-register");
     } else if (role === "mover") {
-      router.push("/register");
+      router.push("/mover-register");
     }
   };
 
@@ -61,13 +61,7 @@ const ChooseRole = () => {
           <span className="group-hover:underline">Register as Mover</span>
         </button>
       </div>
-
-      {/* Footer */}
-      <div className="absolute bottom-4 text-sm text-gray-300 animate-fade-in">
-        Powered by <strong>Web3</strong> | <span className="underline cursor-pointer">Learn More</span>
-      </div>
-
-      {/* Background Animation */}
+      
       <div
         className="absolute inset-0 bg-gradient-to-t from-transparent to-black opacity-20 pointer-events-none animate-pulse"
         aria-hidden="true"
@@ -76,4 +70,4 @@ const ChooseRole = () => {
   );
 };
 
-export default ChooseRole;
+export default RolesPage;
