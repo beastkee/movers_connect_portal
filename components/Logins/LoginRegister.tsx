@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/firebase/firebaseConfig"; // Import your Firebase auth instance
+import { auth } from "@/firebase/firebaseConfig";
 import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/firebase/firebaseConfig"; // Import your Firestore db instance
+import { db } from "@/firebase/firebaseConfig";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -18,38 +18,32 @@ const LoginPage = () => {
     setError("");
 
     try {
-      // Sign in the user using Firebase Authentication
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Require email verification
       if (!user.emailVerified) {
         setError("Please verify your email before logging in. Check your inbox for a verification link.");
         setLoading(false);
         return;
       }
 
-      // Query both the 'movers' and 'clients' subcollections for the user
+      // Determine role from authenticated UID paths for stable lookups.
       const moversRef = collection(db, "users", user.uid, "movers");
       const clientsRef = collection(db, "users", user.uid, "clients");
-        // Determine role by checking docs under the authenticated UID path.
-        // This is resilient to email casing/format differences and password resets.
-      const moverQuery = query(moversRef, where("email", "==", email));
-      const clientQuery = query(clientsRef, where("email", "==", email));
 
+      const [moverSnapshot, clientSnapshot] = await Promise.all([
+        getDocs(moversRef),
+        getDocs(clientsRef),
       ]);
-          getDocs(moversRef),
-          getDocs(clientsRef),
-        // User found in the 'movers' subcollection
-        router.push("/mover"); // Redirect to mover dashboard
+
+      if (!moverSnapshot.empty) {
+        router.push("/mover-dashboard");
       } else if (!clientSnapshot.empty) {
-        // User found in the 'clients' subcollection
-          router.push("/mover-dashboard"); // Redirect to mover dashboard
+        router.push("/client-dashboard");
       } else {
-        setError("User not found in either movers or clients.");
-          router.push("/client-dashboard"); // Redirect to client dashboard
+        setError("User profile not found. Please contact support.");
       }
-          setError("User profile not found. Please contact support.");
+    } catch (err: any) {
       setError(err.message || "Failed to log in. Please try again.");
     } finally {
       setLoading(false);
@@ -64,9 +58,8 @@ const LoginPage = () => {
           Log in to your account to access your dashboard.
         </p>
         <form onSubmit={handleLogin} className="space-y-6">
-          {error && (
-            <p className="text-red-500 text-center font-medium">{error}</p>
-          )}
+          {error && <p className="text-red-500 text-center font-medium">{error}</p>}
+
           <div>
             <label htmlFor="email" className="block text-sm font-medium">
               Email
@@ -80,6 +73,7 @@ const LoginPage = () => {
               className="w-full mt-2 p-3 bg-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
             />
           </div>
+
           <div>
             <label htmlFor="password" className="block text-sm font-medium">
               Password
@@ -93,27 +87,28 @@ const LoginPage = () => {
               className="w-full mt-2 p-3 bg-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
             />
           </div>
+
           <button
             type="submit"
             className={`w-full py-3 text-lg font-semibold rounded-lg transition ${
-              loading
-                ? "bg-gray-500 cursor-not-allowed"
-                : "bg-purple-600 hover:bg-purple-700"
+              loading ? "bg-gray-500 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700"
             }`}
             disabled={loading}
           >
             {loading ? "Logging in..." : "Log In"}
           </button>
+
+          <div className="text-center">
+            <a
+              href="/forgot-password"
+              className="text-sm text-purple-400 hover:underline hover:text-purple-300"
+            >
+              Forgot Password?
+            </a>
+          </div>
         </form>
+
         <p className="text-center text-gray-400 mt-6">
-            <div className="text-center">
-              <a
-                href="/forgot-password"
-                className="text-sm text-purple-400 hover:underline hover:text-purple-300"
-              >
-                Forgot Password?
-              </a>
-            </div>
           Don't have an account?{" "}
           <a
             href="/roles"
