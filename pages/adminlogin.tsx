@@ -29,7 +29,7 @@ const AdminLoginPage = () => {
       await signInWithEmailAndPassword(auth, email, password);
       
       // Redirect to admin dashboard
-      router.push("/admin");
+      router.push("/admin-dashboard");
     } catch (err: any) {
       setError(err.message || "Failed to log in. Please check your credentials.");
     } finally {

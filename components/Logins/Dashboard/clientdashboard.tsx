@@ -53,7 +53,7 @@ const ClientDashboard: React.FC = () => {
     
     const adminEmails = ["admin@admin.com", "admin@moversconnect.com", "beastkee@example.com"];
     if (user.email && adminEmails.includes(user.email)) {
-      router.replace("/admin");
+      router.replace("/admin-dashboard");
       return;
     }
 
