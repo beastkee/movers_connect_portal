@@ -29,26 +29,27 @@ const LoginPage = () => {
         return;
       }
 
-      // Determine role by checking docs under the authenticated UID path.
-      // This is resilient to email casing/format differences and password resets.
+      // Query both the 'movers' and 'clients' subcollections for the user
       const moversRef = collection(db, "users", user.uid, "movers");
       const clientsRef = collection(db, "users", user.uid, "clients");
+        // Determine role by checking docs under the authenticated UID path.
+        // This is resilient to email casing/format differences and password resets.
+      const moverQuery = query(moversRef, where("email", "==", email));
+      const clientQuery = query(clientsRef, where("email", "==", email));
 
-      const [moverSnapshot, clientSnapshot] = await Promise.all([
-        getDocs(moversRef),
-        getDocs(clientsRef),
       ]);
-
-      if (!moverSnapshot.empty) {
+          getDocs(moversRef),
+          getDocs(clientsRef),
         // User found in the 'movers' subcollection
-        router.push("/mover-dashboard"); // Redirect to mover dashboard
+        router.push("/mover"); // Redirect to mover dashboard
       } else if (!clientSnapshot.empty) {
         // User found in the 'clients' subcollection
-        router.push("/client-dashboard"); // Redirect to client dashboard
+          router.push("/mover-dashboard"); // Redirect to mover dashboard
       } else {
-        setError("User profile not found. Please contact support.");
+        setError("User not found in either movers or clients.");
+          router.push("/client-dashboard"); // Redirect to client dashboard
       }
-    } catch (err: any) {
+          setError("User profile not found. Please contact support.");
       setError(err.message || "Failed to log in. Please try again.");
     } finally {
       setLoading(false);
@@ -103,17 +104,16 @@ const LoginPage = () => {
           >
             {loading ? "Logging in..." : "Log In"}
           </button>
-          
-          <div className="text-center">
-            <a
-              href="/forgot-password"
-              className="text-sm text-purple-400 hover:underline hover:text-purple-300"
-            >
-              Forgot Password?
-            </a>
-          </div>
         </form>
         <p className="text-center text-gray-400 mt-6">
+            <div className="text-center">
+              <a
+                href="/forgot-password"
+                className="text-sm text-purple-400 hover:underline hover:text-purple-300"
+              >
+                Forgot Password?
+              </a>
+            </div>
           Don't have an account?{" "}
           <a
             href="/roles"
