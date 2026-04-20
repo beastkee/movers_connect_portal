@@ -127,23 +127,38 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ userType }) => {
   };
 
   if (!isClient) return null;
-  if (!user) return <div className="text-center text-red-500">You must be logged in to edit your profile.</div>;
-  if (loading) return <div>Loading profile...</div>;
+  if (!user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0a1024] via-[#111b3d] to-[#090f20] px-5 text-[#e8ecff]">
+        <div className="rounded-xl border border-[#ff8f9f]/45 bg-[#0f1834]/85 px-6 py-4 text-[#ffd4db]">
+          You must be logged in to edit your profile.
+        </div>
+      </div>
+    );
+  }
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0a1024] via-[#111b3d] to-[#090f20] px-5 text-[#d7e0ff]">
+        Loading profile...
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-white rounded shadow">
-      <h2 className="text-2xl font-bold mb-4">Edit Profile</h2>
-      {error && <div className="text-red-500 mb-2">{error}</div>}
-      {success && <div className="text-green-500 mb-2">{success}</div>}
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0a1024] via-[#111b3d] to-[#090f20] px-5 py-8 text-[#e8ecff]">
+      <div className="w-full max-w-md rounded-2xl border border-[#7ba1ff]/30 bg-[#0f1834]/85 p-6 shadow-[0_20px_50px_rgba(3,7,20,0.55)] backdrop-blur-sm">
+      <h2 className="mb-4 text-2xl font-black">Edit Profile</h2>
+      {error && <div className="mb-2 rounded-lg border border-[#ff8f9f]/45 bg-[#ff8f9f]/15 px-3 py-2 text-[#ffd4db]">{error}</div>}
+      {success && <div className="mb-2 rounded-lg border border-[#7de3ba]/45 bg-[#7de3ba]/12 px-3 py-2 text-[#d7ffef]">{success}</div>}
   <form onSubmit={handleSave} className="space-y-4">
         {/* Only show credential upload for movers */}
         {userType === "movers" && (
           <div>
             <label className="block font-medium">Upload Credentials (License, Insurance, etc.)</label>
-            <input type="file" multiple onChange={handleCredentialChange} />
+            <input className="mt-1 block w-full text-sm text-[#b8c4ea]" type="file" multiple onChange={handleCredentialChange} />
             <button
               type="button"
-              className="mt-2 bg-green-600 text-white px-4 py-1 rounded"
+              className="mt-2 rounded-lg bg-[#7ba1ff] px-4 py-1.5 font-semibold text-[#08112b] transition hover:bg-[#9bb7ff]"
               onClick={handleUploadCredentials}
               disabled={uploadingCreds || !credentialFiles}
             >
@@ -155,7 +170,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ userType }) => {
                 <ul className="list-disc ml-6">
                   {profile.credentials.map((url, idx) => (
                     <li key={idx}>
-                      <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Document {idx + 1}</a>
+                      <a href={url} target="_blank" rel="noopener noreferrer" className="text-[#9fb8ff] underline">Document {idx + 1}</a>
                     </li>
                   ))}
                 </ul>
@@ -170,7 +185,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ userType }) => {
             name="name"
             value={profile.name || ""}
             onChange={handleChange}
-            className="w-full border rounded px-3 py-2"
+            className="w-full rounded-lg border border-[#7ba1ff]/40 bg-[#132148] px-3 py-2 text-[#eef2ff]"
           />
         </div>
         <div>
@@ -180,7 +195,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ userType }) => {
             name="email"
             value={profile.email || ""}
             onChange={handleChange}
-            className="w-full border rounded px-3 py-2"
+            className="w-full rounded-lg border border-[#7ba1ff]/40 bg-[#132148] px-3 py-2 text-[#eef2ff]"
             disabled
           />
         </div>
@@ -191,24 +206,25 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ userType }) => {
             name="phone"
             value={profile.phone || ""}
             onChange={handleChange}
-            className="w-full border rounded px-3 py-2"
+            className="w-full rounded-lg border border-[#7ba1ff]/40 bg-[#132148] px-3 py-2 text-[#eef2ff]"
           />
         </div>
         <div>
           <label className="block font-medium">Profile Photo</label>
-          <input type="file" accept="image/*" onChange={handlePhotoChange} />
+          <input className="mt-1 block w-full text-sm text-[#b8c4ea]" type="file" accept="image/*" onChange={handlePhotoChange} />
           {profile.photoURL && (
             <img src={profile.photoURL} alt="Profile" className="w-24 h-24 rounded-full mt-2" />
           )}
         </div>
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded font-semibold"
+          className="w-full rounded-lg bg-[#7ba1ff] py-2 font-semibold text-[#08112b] transition hover:bg-[#9bb7ff]"
           disabled={saving}
         >
           {saving ? "Saving..." : "Save Changes"}
         </button>
       </form>
+      </div>
     </div>
   );
 };
