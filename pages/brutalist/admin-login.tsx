@@ -33,7 +33,11 @@ const BrutalistAdminLogin = () => {
   };
 
   return (
-    <BrutalistShell eyebrow="Brutalist Auth / Admin" title="Admin Login" headerClassName="bg-[#b8ff4a]">
+    <BrutalistShell
+      eyebrow="Brutalist Auth / Admin"
+      title="Admin Login"
+      headerClassName="bg-[repeating-linear-gradient(90deg,#00d2ff_0_14px,#000_14px_18px,#ffe600_18px_32px,#000_32px_36px,#ff2fb3_36px_50px,#000_50px_54px)]"
+    >
 
         <main className="bg-white p-5">
           <form onSubmit={onSubmit} className="space-y-4">

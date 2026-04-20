@@ -62,7 +62,7 @@ const BrutalistClientDashboard = () => {
 
   return (
     <BrutalistShell
-      headerClassName="bg-[#ffe55a]"
+      headerClassName="bg-[repeating-linear-gradient(90deg,#ffe600_0_16px,#000_16px_20px,#00d2ff_20px_36px,#000_36px_40px,#ff2fb3_40px_56px,#000_56px_60px)]"
       eyebrow="Client Console / Brutalist Preview"
       title="Find Verified Movers"
     >

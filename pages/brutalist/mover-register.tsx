@@ -79,7 +79,11 @@ const BrutalistMoverRegister = () => {
   };
 
   return (
-    <BrutalistShell eyebrow="Brutalist Auth / Mover Register" title="Mover Sign Up" headerClassName="bg-[#ff6d3d]">
+    <BrutalistShell
+      eyebrow="Brutalist Auth / Mover Register"
+      title="Mover Sign Up"
+      headerClassName="bg-[repeating-linear-gradient(-45deg,#00d2ff_0_16px,#000_16px_20px,#ffe600_20px_36px,#000_36px_40px,#ff2fb3_40px_56px,#000_56px_60px)]"
+    >
 
         <main className="bg-white p-5">
           <form onSubmit={onSubmit} className="space-y-4">
