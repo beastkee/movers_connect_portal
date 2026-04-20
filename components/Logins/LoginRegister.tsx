@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
+import Link from "next/link";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/firebase/firebaseConfig";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/firebase/firebaseConfig";
+import { isAdminEmail } from "@/firebase/adminConfig";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -20,6 +22,12 @@ const LoginPage = () => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+
+      // Admins can use this same login and are routed directly.
+      if (isAdminEmail(user.email)) {
+        router.push("/admin-dashboard");
+        return;
+      }
 
       if (!user.emailVerified) {
         setError("Please verify your email before logging in. Check your inbox for a verification link.");
@@ -51,73 +59,112 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-800 to-gray-900 text-white">
-      <div className="w-full max-w-md p-8 bg-opacity-80 bg-gray-800 rounded-lg shadow-lg">
-        <h1 className="text-3xl font-extrabold text-center mb-6">Welcome Back</h1>
-        <p className="text-gray-400 text-center mb-8">
-          Log in to your account to access your dashboard.
-        </p>
-        <form onSubmit={handleLogin} className="space-y-6">
-          {error && <p className="text-red-500 text-center font-medium">{error}</p>}
+    <div className="relative min-h-screen overflow-hidden bg-[#f5f0e5] text-[#1e1c19]">
+      <div className="pointer-events-none absolute left-2 top-8 h-44 w-44 rounded-full bg-[#ff7a59]/20 blur-2xl" />
+      <div className="pointer-events-none absolute right-4 top-6 h-40 w-40 rounded-full bg-[#53d8ff]/20 blur-2xl" />
 
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium">
-              Email
-            </label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full mt-2 p-3 bg-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
-            />
+      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-xl items-center px-5 py-8">
+        <section className="w-full rounded-[1.5rem] border-2 border-[#1e1c19] bg-[#fff7ea] p-6 shadow-[6px_6px_0_#1e1c19] md:p-7">
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#7f2a18]">Movers Connect</p>
+          <h1 className="mt-2 text-3xl font-black leading-tight md:text-4xl">Welcome Back</h1>
+          <p className="mt-3 max-w-md text-sm text-[#4a4036]">
+            Your next move starts here. Log in to manage bookings, quotes, and client communication.
+          </p>
+
+          <div className="mt-4 rounded-xl border border-[#1e1c19]/25 bg-white/70 px-4 py-2.5">
+            <p className="text-sm font-semibold text-[#3b332b]">Quick summary</p>
+            <p className="mt-1 text-sm text-[#5c5247]">Book movers, compare quotes, and message in one place.</p>
           </div>
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium">
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full mt-2 p-3 bg-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
-            />
-          </div>
+          <form onSubmit={handleLogin} className="mt-6 space-y-4.5">
+            {error && <p className="rounded-xl border-2 border-[#7f2a18] bg-[#ffe1da] px-4 py-3 text-sm font-semibold text-[#7f2a18]">{error}</p>}
 
-          <button
-            type="submit"
-            className={`w-full py-3 text-lg font-semibold rounded-lg transition ${
-              loading ? "bg-gray-500 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700"
-            }`}
-            disabled={loading}
-          >
-            {loading ? "Logging in..." : "Log In"}
-          </button>
+            <div>
+              <label htmlFor="email" className="block text-xs font-bold uppercase tracking-[0.16em] text-[#4a4036]">
+                Email
+              </label>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="mt-2 w-full rounded-xl border-2 border-[#1e1c19] bg-white px-4 py-3 text-sm font-medium outline-none transition focus:border-[#53d8ff] focus:ring-2 focus:ring-[#53d8ff]/40"
+              />
+            </div>
 
-          <div className="text-center">
-            <a
-              href="/forgot-password"
-              className="text-sm text-purple-400 hover:underline hover:text-purple-300"
+            <div>
+              <label htmlFor="password" className="block text-xs font-bold uppercase tracking-[0.16em] text-[#4a4036]">
+                Password
+              </label>
+              <input
+                type="password"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="mt-2 w-full rounded-xl border-2 border-[#1e1c19] bg-white px-4 py-3 text-sm font-medium outline-none transition focus:border-[#53d8ff] focus:ring-2 focus:ring-[#53d8ff]/40"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className={`w-full rounded-xl border-2 border-[#1e1c19] py-3 text-base font-black uppercase tracking-[0.08em] transition ${
+                loading
+                  ? "cursor-not-allowed bg-[#d4cec4] text-[#6f665c]"
+                  : "bg-[#1e1c19] text-white hover:bg-[#53d8ff] hover:text-[#1e1c19]"
+              }`}
+              disabled={loading}
             >
-              Forgot Password?
-            </a>
-          </div>
-        </form>
+              {loading ? "Logging In..." : "Log In"}
+            </button>
 
-        <p className="text-center text-gray-400 mt-6">
-          Don't have an account?{" "}
-          <a
-            href="/roles"
-            className="text-purple-400 hover:underline hover:text-purple-300"
-          >
-            Sign up
-          </a>
-        </p>
+            <div className="text-center">
+              <Link href="/forgot-password" className="text-sm font-semibold text-[#235a6c] underline decoration-2 underline-offset-2 hover:text-[#0d3f4d]">
+                Forgot Password?
+              </Link>
+            </div>
+          </form>
+
+          <p className="mt-6 text-center text-sm text-[#4a4036]">
+            Don&apos;t have an account?{" "}
+            <Link href="/roles" className="font-bold text-[#7f2a18] underline decoration-2 underline-offset-2 hover:text-[#4f170d]">
+              Sign up
+            </Link>
+          </p>
+
+          <div className="mt-4 overflow-hidden rounded-lg border border-[#1e1c19]/20 bg-white/60 px-3 py-2">
+            <p className="login-ticker whitespace-nowrap text-xs font-semibold tracking-wide text-[#4a4036]">
+              Live updates: Admin access now works through this same login form • Booking status and quote updates are real-time • Chat stays synced with movers
+            </p>
+          </div>
+        </section>
       </div>
+
+      <style jsx>{`
+        .login-ticker {
+          display: inline-block;
+          padding-left: 100%;
+          animation: loginTicker 16s linear infinite;
+        }
+
+        @keyframes loginTicker {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-100%);
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .login-ticker {
+            animation: none;
+            padding-left: 0;
+            white-space: normal;
+          }
+        }
+      `}</style>
     </div>
   );
 };

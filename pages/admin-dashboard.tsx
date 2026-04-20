@@ -3,6 +3,7 @@ import { db } from "@/firebase/firebaseConfig";
 import { collectionGroup, getDocs, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { useRouter } from "next/router";
+import { isAdminEmail } from "@/firebase/adminConfig";
 
 interface MoverData {
   id: string;
@@ -43,11 +44,6 @@ const AdminDashboard: React.FC = () => {
   const user = auth?.currentUser;
   const router = useRouter();
 
-  // Admin emails - replace with your admin email(s)
-  const adminEmails = [
-    "admin@admin.com",           // Default admin for testing
-  ];
-
   useEffect(() => {
     // Wait for auth to be ready
     if (!user) {
@@ -56,7 +52,7 @@ const AdminDashboard: React.FC = () => {
     }
     
     // Check if user is admin
-    if (!adminEmails.includes(user.email || "")) {
+    if (!isAdminEmail(user.email)) {
       alert("Access denied. Admin only.");
       router.push("/adminlogin");
       return;
@@ -301,7 +297,7 @@ const AdminDashboard: React.FC = () => {
     );
   }
 
-  if (user && !adminEmails.includes(user.email || "")) {
+  if (user && !isAdminEmail(user.email)) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center">
         <p className="text-red-500 text-xl">Access Denied - Admin Only</p>
