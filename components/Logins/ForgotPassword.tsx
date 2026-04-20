@@ -45,22 +45,22 @@ const ForgotPassword: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-800 to-gray-900 text-white">
-      <div className="w-full max-w-md p-8 bg-opacity-80 bg-gray-800 rounded-lg shadow-lg">
-        <h1 className="text-3xl font-extrabold text-center mb-2">Reset Password</h1>
-        <p className="text-gray-400 text-center mb-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0a1024] via-[#111b3d] to-[#090f20] px-5 text-[#e8ecff]">
+      <div className="w-full max-w-md rounded-2xl border border-[#7ba1ff]/30 bg-[#0f1834]/85 p-7 shadow-[0_20px_50px_rgba(3,7,20,0.55)] backdrop-blur-sm">
+        <h1 className="mb-2 text-center text-3xl font-black">Reset Password</h1>
+        <p className="mb-8 text-center text-[#b8c4ea]">
           Enter your email address and to get link to reset password.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className="p-4 bg-red-500 bg-opacity-20 rounded-lg border border-red-500 text-red-200">
+            <div className="rounded-lg border border-[#ff8f9f]/45 bg-[#ff8f9f]/15 p-4 text-[#ffd4db]">
               {error}
             </div>
           )}
           
           {successMessage && (
-            <div className="p-4 bg-green-500 bg-opacity-20 rounded-lg border border-green-500 text-green-200">
+            <div className="rounded-lg border border-[#7de3ba]/45 bg-[#7de3ba]/12 p-4 text-[#d7ffef]">
               {successMessage}
             </div>
           )}
@@ -76,7 +76,7 @@ const ForgotPassword: React.FC = () => {
               onChange={(e) => setEmail(e.target.value)}
               required
               placeholder="your.email@example.com"
-              className="w-full mt-2 p-3 bg-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+              className="mt-2 w-full rounded-lg border border-[#7ba1ff]/40 bg-[#132148] p-3 text-[#eef2ff] placeholder-[#95a5d3] focus:outline-none focus:ring-2 focus:ring-[#7ba1ff]/50"
               disabled={loading}
             />
           </div>
@@ -85,8 +85,8 @@ const ForgotPassword: React.FC = () => {
             type="submit"
             className={`w-full py-3 text-lg font-semibold rounded-lg transition ${
               loading
-                ? "bg-gray-500 cursor-not-allowed"
-                : "bg-purple-600 hover:bg-purple-700"
+                ? "cursor-not-allowed bg-[#51608d] text-[#d5ddff]"
+                : "bg-[#7ba1ff] text-[#08112b] hover:bg-[#9bb7ff]"
             }`}
             disabled={loading}
           >
@@ -97,7 +97,7 @@ const ForgotPassword: React.FC = () => {
         <div className="mt-6 text-center">
           <a
             href="/login"
-            className="text-purple-400 hover:underline hover:text-purple-300"
+            className="text-[#9fb8ff] hover:text-[#c4d4ff] hover:underline"
           >
             Back to Login
           </a>

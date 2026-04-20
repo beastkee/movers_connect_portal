@@ -5,6 +5,7 @@ import { getAuth } from "firebase/auth";
 import { addReview, getMoverReviews } from "@/firebase/review";
 import type { Review } from "@/types/review";
 import { useRouter } from "next/router";
+import { isAdminEmail } from "@/firebase/adminConfig";
 
 interface Mover {
   id: string;
@@ -50,9 +51,8 @@ const ClientDashboard: React.FC = () => {
   // Redirect admin users to admin dashboard
   useEffect(() => {
     if (!user) return;
-    
-    const adminEmails = ["admin@admin.com", "admin@moversconnect.com", "beastkee@example.com"];
-    if (user.email && adminEmails.includes(user.email)) {
+
+    if (isAdminEmail(user.email)) {
       router.replace("/admin-dashboard");
       return;
     }

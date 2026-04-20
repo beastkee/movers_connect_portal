@@ -127,12 +127,12 @@ const MoverRegisterForm: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-black flex items-center justify-center">
-      <div className="relative w-full max-w-lg mx-auto bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-800 rounded-3xl shadow-lg p-10">
-        <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 w-20 h-20 bg-gradient-to-br from-white to-gray-200 backdrop-blur-md rounded-full shadow-lg flex items-center justify-center text-2xl font-bold text-purple-800">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0a1024] via-[#111b3d] to-[#090f20] px-5">
+      <div className="relative mx-auto w-full max-w-lg rounded-3xl border border-[#7ba1ff]/30 bg-[#0f1834]/85 p-8 shadow-[0_20px_50px_rgba(3,7,20,0.55)] backdrop-blur-sm">
+        <div className="absolute -top-8 left-1/2 flex h-16 w-16 -translate-x-1/2 items-center justify-center rounded-full border border-[#7ba1ff]/35 bg-[#132148] text-2xl font-bold text-[#a9c3ff] shadow-lg">
           🚚
         </div>
-        <h2 className="text-3xl font-extrabold text-center text-white mb-8">
+        <h2 className="mb-8 text-center text-3xl font-black text-[#eef2ff]">
           Register as a Mover
         </h2>
   <form
@@ -149,21 +149,21 @@ const MoverRegisterForm: React.FC = () => {
   >
           {/* Credential Upload Field */}
           <div>
-            <label className="block text-white font-medium mb-1">Upload Credentials (License, Insurance, etc.)</label>
+            <label className="mb-1 block font-medium text-[#d7e0ff]">Upload Credentials (License, Insurance, etc.)</label>
             <input
               type="file"
               multiple
               onChange={e => setCredentialFiles(e.target.files)}
-              className="w-full px-6 py-2 bg-transparent border border-purple-400 rounded-xl text-white"
+              className="w-full rounded-xl border border-[#7ba1ff]/40 bg-[#132148] px-6 py-2 text-[#eef2ff]"
               disabled={uploadingCreds}
             />
             {credentialFiles && credentialFiles.length > 0 && (
-              <p className="text-purple-200 mt-1 text-sm">
+              <p className="mt-1 text-sm text-[#b8c8f3]">
                 {credentialFiles.length} file(s) selected
               </p>
             )}
             {uploadingCreds && registrationStep && (
-              <p className="text-yellow-300 mt-1 animate-pulse">
+              <p className="mt-1 animate-pulse text-[#ffd48d]">
                 {registrationStep}
               </p>
             )}
@@ -174,7 +174,7 @@ const MoverRegisterForm: React.FC = () => {
               type="text"
               {...register("companyName", { required: "Company name is required" })}
               placeholder="Company Name"
-              className="w-full px-6 py-3 bg-transparent border border-purple-400 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none text-white placeholder-gray-400"
+              className="w-full rounded-xl border border-[#7ba1ff]/40 bg-[#132148] px-6 py-3 text-[#eef2ff] placeholder-[#95a5d3] focus:outline-none focus:ring-2 focus:ring-[#7ba1ff]/50"
             />
             {errors.companyName && (
               <p className="text-red-500 text-sm mt-1">{errors.companyName.message}</p>
@@ -187,7 +187,7 @@ const MoverRegisterForm: React.FC = () => {
               type="text"
               {...register("serviceArea", { required: "Service area is required" })}
               placeholder="Service Area"
-              className="w-full px-6 py-3 bg-transparent border border-purple-400 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none text-white placeholder-gray-400"
+              className="w-full rounded-xl border border-[#7ba1ff]/40 bg-[#132148] px-6 py-3 text-[#eef2ff] placeholder-[#95a5d3] focus:outline-none focus:ring-2 focus:ring-[#7ba1ff]/50"
             />
             {errors.serviceArea && (
               <p className="text-red-500 text-sm mt-1">{errors.serviceArea.message}</p>
@@ -200,7 +200,7 @@ const MoverRegisterForm: React.FC = () => {
               type="text"
               {...register("contactNumber", { required: "Contact number is required" })}
               placeholder="Contact Number"
-              className="w-full px-6 py-3 bg-transparent border border-purple-400 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none text-white placeholder-gray-400"
+              className="w-full rounded-xl border border-[#7ba1ff]/40 bg-[#132148] px-6 py-3 text-[#eef2ff] placeholder-[#95a5d3] focus:outline-none focus:ring-2 focus:ring-[#7ba1ff]/50"
             />
             {errors.contactNumber && (
               <p className="text-red-500 text-sm mt-1">{errors.contactNumber.message}</p>
@@ -213,7 +213,7 @@ const MoverRegisterForm: React.FC = () => {
               type="email"
               {...register("email", { required: "Email is required" })}
               placeholder="Email Address"
-              className="w-full px-6 py-3 bg-transparent border border-purple-400 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none text-white placeholder-gray-400"
+              className="w-full rounded-xl border border-[#7ba1ff]/40 bg-[#132148] px-6 py-3 text-[#eef2ff] placeholder-[#95a5d3] focus:outline-none focus:ring-2 focus:ring-[#7ba1ff]/50"
             />
             {errors.email && (
               <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
@@ -226,12 +226,12 @@ const MoverRegisterForm: React.FC = () => {
               type={showPassword ? "text" : "password"}
               {...register("password", { required: "Password is required" })}
               placeholder="Create a Password"
-              className="w-full px-6 py-3 bg-transparent border border-purple-400 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none text-white placeholder-gray-400"
+              className="w-full rounded-xl border border-[#7ba1ff]/40 bg-[#132148] px-6 py-3 text-[#eef2ff] placeholder-[#95a5d3] focus:outline-none focus:ring-2 focus:ring-[#7ba1ff]/50"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-4 text-purple-300 hover:text-purple-500 focus:outline-none"
+              className="absolute inset-y-0 right-4 text-[#9fb8ff] hover:text-[#c4d4ff] focus:outline-none"
               aria-label="Toggle Password Visibility"
             >
               {showPassword ? "🙈" : "👁️"}
@@ -244,7 +244,7 @@ const MoverRegisterForm: React.FC = () => {
           {/** Submit Button */}
           <button
             type="submit"
-            className="w-full py-3 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-xl font-bold shadow-lg hover:opacity-90 focus:ring-2 focus:ring-indigo-400 transition-opacity"
+            className="w-full rounded-xl bg-[#7ba1ff] py-3 font-bold text-[#08112b] shadow-lg transition hover:bg-[#9bb7ff] focus:ring-2 focus:ring-[#7ba1ff]/40"
             disabled={isSubmitting}
           >
             {isSubmitting ? "Registering..." : "Register"}
@@ -252,12 +252,12 @@ const MoverRegisterForm: React.FC = () => {
         </form>
 
         {success && (
-          <div className="mt-6 bg-green-100 text-green-700 p-3 rounded text-center">
+          <div className="mt-6 rounded border border-[#7de3ba]/45 bg-[#7de3ba]/12 p-3 text-center text-[#d7ffef]">
             Registration Successful! Redirecting to login...
           </div>
         )}
         {error && (
-          <div className="mt-6 bg-red-100 text-red-700 p-3 rounded text-center">
+          <div className="mt-6 rounded border border-[#ff8f9f]/45 bg-[#ff8f9f]/15 p-3 text-center text-[#ffd4db]">
             {error}
           </div>
         )}
