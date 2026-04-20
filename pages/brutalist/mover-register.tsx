@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { createUserWithEmailAndPassword, fetchSignInMethodsForEmail, sendEmailVerification } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/firebase/firebaseConfig";
+import { brutal, BrutalistButton, BrutalistLinkButton, BrutalistShell } from "@/components/brutalist/ui";
 
 type MoverForm = {
   companyName: string;
@@ -79,59 +79,53 @@ const BrutalistMoverRegister = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#ede8dc] text-black">
-      <div className="mx-auto max-w-4xl border-x-4 border-black">
-        <header className="border-b-4 border-black bg-[#ff6d3d] p-5">
-          <p className="text-xs font-black uppercase tracking-[0.2em]">Brutalist Auth / Mover Register</p>
-          <h1 className="mt-1 text-4xl font-black uppercase">Mover Sign Up</h1>
-        </header>
+    <BrutalistShell eyebrow="Brutalist Auth / Mover Register" title="Mover Sign Up" headerClassName="bg-[#ff6d3d]">
 
         <main className="bg-white p-5">
           <form onSubmit={onSubmit} className="space-y-4">
-            {error && <p className="border-4 border-black bg-[#ffd6cf] p-3 text-sm font-bold">{error}</p>}
-            {success && <p className="border-4 border-black bg-[#dbf9d1] p-3 text-sm font-bold">{success}</p>}
+            {error && <p className={brutal.alert}>{error}</p>}
+            {success && <p className={brutal.success}>{success}</p>}
 
             <div>
-              <label className="text-xs font-black uppercase">Company Name</label>
-              <input name="companyName" value={form.companyName} onChange={onChange} required className="mt-1 w-full border-4 border-black px-3 py-3 text-sm font-semibold" />
+              <label className={brutal.label}>Company Name</label>
+              <input name="companyName" value={form.companyName} onChange={onChange} required className={brutal.input} />
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <label className="text-xs font-black uppercase">Service Area</label>
-                <input name="serviceArea" value={form.serviceArea} onChange={onChange} required className="mt-1 w-full border-4 border-black px-3 py-3 text-sm font-semibold" />
+                <label className={brutal.label}>Service Area</label>
+                <input name="serviceArea" value={form.serviceArea} onChange={onChange} required className={brutal.input} />
               </div>
               <div>
-                <label className="text-xs font-black uppercase">Contact Number</label>
-                <input name="contactNumber" value={form.contactNumber} onChange={onChange} required className="mt-1 w-full border-4 border-black px-3 py-3 text-sm font-semibold" />
+                <label className={brutal.label}>Contact Number</label>
+                <input name="contactNumber" value={form.contactNumber} onChange={onChange} required className={brutal.input} />
               </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <label className="text-xs font-black uppercase">Email</label>
-                <input name="email" type="email" value={form.email} onChange={onChange} required className="mt-1 w-full border-4 border-black px-3 py-3 text-sm font-semibold" />
+                <label className={brutal.label}>Email</label>
+                <input name="email" type="email" value={form.email} onChange={onChange} required className={brutal.input} />
               </div>
               <div>
-                <label className="text-xs font-black uppercase">Password</label>
-                <input name="password" type="password" value={form.password} onChange={onChange} required className="mt-1 w-full border-4 border-black px-3 py-3 text-sm font-semibold" />
+                <label className={brutal.label}>Password</label>
+                <input name="password" type="password" value={form.password} onChange={onChange} required className={brutal.input} />
               </div>
             </div>
 
-            <button disabled={loading} className="w-full border-4 border-black bg-black px-4 py-3 text-sm font-black uppercase text-white hover:bg-white hover:text-black disabled:opacity-50">
+            <BrutalistButton disabled={loading} full>
               {loading ? "Creating..." : "Create Mover Account"}
-            </button>
+            </BrutalistButton>
           </form>
         </main>
 
         <footer className="border-t-4 border-black bg-[#faf7ef] p-4">
           <div className="flex flex-wrap gap-2">
-            <Link href="/brutalist/login" className="border-4 border-black bg-white px-3 py-2 text-xs font-black uppercase hover:bg-black hover:text-white">Back to Login</Link>
-            <Link href="/brutalist/roles" className="border-4 border-black bg-white px-3 py-2 text-xs font-black uppercase hover:bg-black hover:text-white">Change Role</Link>
+            <BrutalistLinkButton href="/brutalist/login">Back to Login</BrutalistLinkButton>
+            <BrutalistLinkButton href="/brutalist/roles">Change Role</BrutalistLinkButton>
           </div>
         </footer>
-      </div>
-    </div>
+    </BrutalistShell>
   );
 };
 

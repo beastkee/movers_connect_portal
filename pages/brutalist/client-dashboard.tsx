@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { getAuth } from "firebase/auth";
 import { collectionGroup, getDocs } from "firebase/firestore";
 import { db } from "@/firebase/firebaseConfig";
+import { brutal, BrutalistLinkButton, BrutalistShell } from "@/components/brutalist/ui";
 
 type MoverRow = {
   id: string;
@@ -61,20 +61,17 @@ const BrutalistClientDashboard = () => {
   }, [movers, query]);
 
   return (
-    <div className="min-h-screen bg-[#f6f3ea] text-black">
-      <div className="mx-auto max-w-6xl border-x-4 border-black">
-        <header className="border-b-4 border-black bg-[#ffe55a] p-5">
-          <p className="text-xs font-bold uppercase tracking-[0.2em]">Client Console / Brutalist Preview</p>
-          <h1 className="mt-1 text-4xl font-black uppercase">Find Verified Movers</h1>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <Link href="/client-dashboard" className="border-4 border-black bg-white px-3 py-2 text-xs font-black uppercase hover:bg-black hover:text-white">
-              Open Classic Dashboard
-            </Link>
-            <Link href="/brutalist" className="border-4 border-black bg-white px-3 py-2 text-xs font-black uppercase hover:bg-black hover:text-white">
-              Back to Preview Hub
-            </Link>
+    <BrutalistShell
+      headerClassName="bg-[#ffe55a]"
+      eyebrow="Client Console / Brutalist Preview"
+      title="Find Verified Movers"
+    >
+        <div className="border-b-4 border-black bg-[#ffe55a] px-5 pb-5">
+          <div className="flex flex-wrap gap-3">
+            <BrutalistLinkButton href="/client-dashboard">Open Classic Dashboard</BrutalistLinkButton>
+            <BrutalistLinkButton href="/brutalist">Back to Preview Hub</BrutalistLinkButton>
           </div>
-        </header>
+        </div>
 
         <section className="border-b-4 border-black bg-white p-5">
           <label htmlFor="search" className="block text-xs font-black uppercase tracking-wide">
@@ -104,15 +101,14 @@ const BrutalistClientDashboard = () => {
                   <p>Phone: {m.contactNumber}</p>
                   <p>Status: {m.status.toUpperCase()}</p>
                 </div>
-                <button className="mt-5 border-4 border-black bg-black px-3 py-2 text-xs font-black uppercase text-white hover:bg-white hover:text-black">
+                <button className="mt-5 border-4 border-black bg-black px-3 py-2 text-xs font-black uppercase text-white transition hover:bg-white hover:text-black">
                   Request Quote (Preview)
                 </button>
               </article>
             ))
           )}
         </main>
-      </div>
-    </div>
+    </BrutalistShell>
   );
 };
 
