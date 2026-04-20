@@ -53,7 +53,7 @@ const BrutalistMoverDashboard = () => {
 
   return (
     <BrutalistShell
-      headerClassName="bg-[repeating-linear-gradient(135deg,#ff2fb3_0_16px,#000_16px_20px,#ffe600_20px_36px,#000_36px_40px,#00d2ff_40px_56px,#000_56px_60px)]"
+      headerClassName="bg-[#ff6d3d]"
       eyebrow="Mover Console / Brutalist Preview"
       title="Operations Board"
     >

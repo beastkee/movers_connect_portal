@@ -61,11 +61,7 @@ const BrutalistClientRegister = () => {
   };
 
   return (
-    <BrutalistShell
-      eyebrow="Brutalist Auth / Client Register"
-      title="Client Sign Up"
-      headerClassName="bg-[repeating-linear-gradient(135deg,#ff2fb3_0_16px,#000_16px_20px,#00d2ff_20px_36px,#000_36px_40px,#ffe600_40px_56px,#000_56px_60px)]"
-    >
+    <BrutalistShell eyebrow="Brutalist Auth / Client Register" title="Client Sign Up" headerClassName="bg-[#ffe55a]">
 
         <main className="bg-white p-5">
           <form onSubmit={submit} className="space-y-4">

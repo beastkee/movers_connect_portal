@@ -6,7 +6,7 @@ const BrutalistRoles = () => {
 
   return (
     <BrutalistShell
-      headerClassName="bg-[repeating-linear-gradient(-45deg,#00d2ff_0_16px,#000_16px_20px,#ff2fb3_20px_36px,#000_36px_40px,#ffe600_40px_56px,#000_56px_60px)] p-6"
+      headerClassName="bg-[#b8ff4a] p-6"
       eyebrow="Brutalist Auth / Roles"
       title="Pick Your Side"
     >
