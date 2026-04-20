@@ -56,33 +56,6 @@ const BrutalistPreviewIndex = () => {
           </article>
         </main>
 
-        <section className="border-t-4 border-black bg-[#fffdf5] p-6">
-          <h2 className="text-2xl font-black uppercase">Auth Flow Preview</h2>
-          <p className="mt-2 text-sm font-medium">
-            Full parallel auth journey with brutalist styling and working logic.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <Link href="/brutalist/login" className="border-4 border-black bg-white px-3 py-2 text-xs font-black uppercase hover:bg-black hover:text-white">
-              Login
-            </Link>
-            <Link href="/brutalist/roles" className="border-4 border-black bg-white px-3 py-2 text-xs font-black uppercase hover:bg-black hover:text-white">
-              Roles
-            </Link>
-            <Link href="/brutalist/client-register" className="border-4 border-black bg-white px-3 py-2 text-xs font-black uppercase hover:bg-black hover:text-white">
-              Client Register
-            </Link>
-            <Link href="/brutalist/mover-register" className="border-4 border-black bg-white px-3 py-2 text-xs font-black uppercase hover:bg-black hover:text-white">
-              Mover Register
-            </Link>
-            <Link href="/brutalist/forgot-password" className="border-4 border-black bg-white px-3 py-2 text-xs font-black uppercase hover:bg-black hover:text-white">
-              Forgot Password
-            </Link>
-            <Link href="/brutalist/admin-login" className="border-4 border-black bg-white px-3 py-2 text-xs font-black uppercase hover:bg-black hover:text-white">
-              Admin Login
-            </Link>
-          </div>
-        </section>
-
         <footer className="border-t-4 border-black bg-white p-4 text-xs font-bold uppercase tracking-wide">
           Existing production routes remain untouched.
         </footer>
