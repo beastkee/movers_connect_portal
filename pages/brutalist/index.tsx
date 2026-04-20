@@ -1,18 +1,19 @@
-import { BrutalistLinkButton, BrutalistShell } from "@/components/brutalist/ui";
+import Link from "next/link";
 
 const BrutalistPreviewIndex = () => {
   return (
-    <BrutalistShell
-      headerClassName="bg-[#ffd447] p-6"
-      eyebrow="Preview Branch"
-      title="Movers Connect Brutalist Preview"
-    >
-      <div className="px-6 pb-6">
-        <p className="mt-3 max-w-3xl text-sm font-medium">
+    <div className="min-h-screen bg-[#f3f1e8] text-black">
+      <div className="mx-auto max-w-6xl border-x-4 border-black">
+        <header className="border-b-4 border-black bg-[#ffd447] p-6">
+          <p className="text-xs font-bold uppercase tracking-[0.2em]">Preview Branch</p>
+          <h1 className="mt-2 text-4xl font-black uppercase leading-tight">
+            Movers Connect Brutalist Preview
+          </h1>
+          <p className="mt-3 max-w-3xl text-sm font-medium">
             Parallel experiment route set. Hard borders, direct hierarchy, low ornament, and
             intentional constraints to feel human-built under realistic solo-dev time pressure.
-        </p>
-      </div>
+          </p>
+        </header>
 
         <main className="grid gap-0 md:grid-cols-3">
           <article className="border-b-4 border-r-0 border-black p-6 md:border-b-0 md:border-r-4">
@@ -20,9 +21,12 @@ const BrutalistPreviewIndex = () => {
             <p className="mt-2 text-sm">
               Search approved movers fast with high-contrast scanning and hard-edge visual rhythm.
             </p>
-            <BrutalistLinkButton href="/brutalist/client-dashboard" className="mt-6 text-sm">
+            <Link
+              href="/brutalist/client-dashboard"
+              className="mt-6 inline-block border-4 border-black bg-white px-4 py-2 text-sm font-black uppercase hover:bg-black hover:text-white"
+            >
               Open Client Preview
-            </BrutalistLinkButton>
+            </Link>
           </article>
 
           <article className="border-b-4 border-r-0 border-black p-6 md:border-b-0 md:border-r-4">
@@ -30,9 +34,12 @@ const BrutalistPreviewIndex = () => {
             <p className="mt-2 text-sm">
               See assignment board and operational stats in a command-style, type-led layout.
             </p>
-            <BrutalistLinkButton href="/brutalist/mover-dashboard" className="mt-6 text-sm">
+            <Link
+              href="/brutalist/mover-dashboard"
+              className="mt-6 inline-block border-4 border-black bg-white px-4 py-2 text-sm font-black uppercase hover:bg-black hover:text-white"
+            >
               Open Mover Preview
-            </BrutalistLinkButton>
+            </Link>
           </article>
 
           <article className="p-6">
@@ -40,9 +47,12 @@ const BrutalistPreviewIndex = () => {
             <p className="mt-2 text-sm">
               Moderate verification queues with a compact, newspaper-like command center.
             </p>
-            <BrutalistLinkButton href="/brutalist/admin-dashboard" className="mt-6 text-sm">
+            <Link
+              href="/brutalist/admin-dashboard"
+              className="mt-6 inline-block border-4 border-black bg-white px-4 py-2 text-sm font-black uppercase hover:bg-black hover:text-white"
+            >
               Open Admin Preview
-            </BrutalistLinkButton>
+            </Link>
           </article>
         </main>
 
@@ -52,31 +62,32 @@ const BrutalistPreviewIndex = () => {
             Full parallel auth journey with brutalist styling and working logic.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
-            <BrutalistLinkButton href="/brutalist/login">
+            <Link href="/brutalist/login" className="border-4 border-black bg-white px-3 py-2 text-xs font-black uppercase hover:bg-black hover:text-white">
               Login
-            </BrutalistLinkButton>
-            <BrutalistLinkButton href="/brutalist/roles">
+            </Link>
+            <Link href="/brutalist/roles" className="border-4 border-black bg-white px-3 py-2 text-xs font-black uppercase hover:bg-black hover:text-white">
               Roles
-            </BrutalistLinkButton>
-            <BrutalistLinkButton href="/brutalist/client-register">
+            </Link>
+            <Link href="/brutalist/client-register" className="border-4 border-black bg-white px-3 py-2 text-xs font-black uppercase hover:bg-black hover:text-white">
               Client Register
-            </BrutalistLinkButton>
-            <BrutalistLinkButton href="/brutalist/mover-register">
+            </Link>
+            <Link href="/brutalist/mover-register" className="border-4 border-black bg-white px-3 py-2 text-xs font-black uppercase hover:bg-black hover:text-white">
               Mover Register
-            </BrutalistLinkButton>
-            <BrutalistLinkButton href="/brutalist/forgot-password">
+            </Link>
+            <Link href="/brutalist/forgot-password" className="border-4 border-black bg-white px-3 py-2 text-xs font-black uppercase hover:bg-black hover:text-white">
               Forgot Password
-            </BrutalistLinkButton>
-            <BrutalistLinkButton href="/brutalist/admin-login">
+            </Link>
+            <Link href="/brutalist/admin-login" className="border-4 border-black bg-white px-3 py-2 text-xs font-black uppercase hover:bg-black hover:text-white">
               Admin Login
-            </BrutalistLinkButton>
+            </Link>
           </div>
         </section>
 
         <footer className="border-t-4 border-black bg-white p-4 text-xs font-bold uppercase tracking-wide">
           Existing production routes remain untouched.
         </footer>
-    </BrutalistShell>
+      </div>
+    </div>
   );
 };
 

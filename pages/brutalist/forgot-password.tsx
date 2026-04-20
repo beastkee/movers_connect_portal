@@ -1,8 +1,8 @@
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/firebase/firebaseConfig";
-import { brutal, BrutalistButton, BrutalistLinkButton, BrutalistShell } from "@/components/brutalist/ui";
 
 const BrutalistForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -29,36 +29,42 @@ const BrutalistForgotPassword = () => {
   };
 
   return (
-    <BrutalistShell eyebrow="Brutalist Auth / Recovery" title="Reset Password" headerClassName="bg-[#ffe55a]">
+    <div className="min-h-screen bg-[#ece6d8] text-black">
+      <div className="mx-auto max-w-3xl border-x-4 border-black">
+        <header className="border-b-4 border-black bg-[#ffe55a] p-5">
+          <p className="text-xs font-black uppercase tracking-[0.2em]">Brutalist Auth / Recovery</p>
+          <h1 className="mt-1 text-4xl font-black uppercase">Reset Password</h1>
+        </header>
 
         <main className="bg-white p-5">
           <form onSubmit={onSubmit} className="space-y-4">
-            {error && <p className={brutal.alert}>{error}</p>}
-            {success && <p className={brutal.success}>{success}</p>}
+            {error && <p className="border-4 border-black bg-[#ffd8cf] p-3 text-sm font-bold">{error}</p>}
+            {success && <p className="border-4 border-black bg-[#dbf7d0] p-3 text-sm font-bold">{success}</p>}
 
             <div>
-              <label className={brutal.label}>Account Email</label>
+              <label className="text-xs font-black uppercase">Account Email</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className={brutal.input}
+                className="mt-1 w-full border-4 border-black px-3 py-3 text-sm font-semibold"
               />
             </div>
 
-            <BrutalistButton disabled={loading} full>
+            <button disabled={loading} className="w-full border-4 border-black bg-black px-4 py-3 text-sm font-black uppercase text-white hover:bg-white hover:text-black disabled:opacity-50">
               {loading ? "Sending..." : "Send Reset Link"}
-            </BrutalistButton>
+            </button>
           </form>
         </main>
 
         <footer className="border-t-4 border-black bg-[#f8f5ec] p-4">
-          <BrutalistLinkButton href="/brutalist/login">
+          <Link href="/brutalist/login" className="border-4 border-black bg-white px-3 py-2 text-xs font-black uppercase hover:bg-black hover:text-white">
             Back to Login
-          </BrutalistLinkButton>
+          </Link>
         </footer>
-    </BrutalistShell>
+      </div>
+    </div>
   );
 };
 

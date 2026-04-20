@@ -1,7 +1,7 @@
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { collectionGroup, doc, getDocs, updateDoc } from "firebase/firestore";
 import { db } from "@/firebase/firebaseConfig";
-import { BrutalistLinkButton, BrutalistShell } from "@/components/brutalist/ui";
 
 type Mover = {
   id: string;
@@ -55,17 +55,20 @@ const BrutalistAdminDashboard = () => {
   };
 
   return (
-    <BrutalistShell
-      headerClassName="bg-[#b8ff4a]"
-      eyebrow="Admin Console / Brutalist Preview"
-      title="Verification Command"
-    >
-        <div className="border-b-4 border-black bg-[#b8ff4a] px-5 pb-5">
-          <div className="flex flex-wrap gap-3">
-            <BrutalistLinkButton href="/admin-dashboard">Open Classic Dashboard</BrutalistLinkButton>
-            <BrutalistLinkButton href="/brutalist">Back to Preview Hub</BrutalistLinkButton>
+    <div className="min-h-screen bg-[#f1eee2] text-black">
+      <div className="mx-auto max-w-6xl border-x-4 border-black">
+        <header className="border-b-4 border-black bg-[#b8ff4a] p-5">
+          <p className="text-xs font-bold uppercase tracking-[0.2em]">Admin Console / Brutalist Preview</p>
+          <h1 className="mt-1 text-4xl font-black uppercase">Verification Command</h1>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link href="/admin-dashboard" className="border-4 border-black bg-white px-3 py-2 text-xs font-black uppercase hover:bg-black hover:text-white">
+              Open Classic Dashboard
+            </Link>
+            <Link href="/brutalist" className="border-4 border-black bg-white px-3 py-2 text-xs font-black uppercase hover:bg-black hover:text-white">
+              Back to Preview Hub
+            </Link>
           </div>
-        </div>
+        </header>
 
         <section className="grid border-b-4 border-black md:grid-cols-3">
           <div className="border-r-0 border-black bg-[#fff2bf] p-4 md:border-r-4">
@@ -113,7 +116,8 @@ const BrutalistAdminDashboard = () => {
             ))
           )}
         </main>
-    </BrutalistShell>
+      </div>
+    </div>
   );
 };
 

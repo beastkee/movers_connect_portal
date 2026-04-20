@@ -1,18 +1,17 @@
+import Link from "next/link";
 import { useRouter } from "next/router";
-import { BrutalistLinkButton, BrutalistShell } from "@/components/brutalist/ui";
 
 const BrutalistRoles = () => {
   const router = useRouter();
 
   return (
-    <BrutalistShell
-      headerClassName="bg-[#b8ff4a] p-6"
-      eyebrow="Brutalist Auth / Roles"
-      title="Pick Your Side"
-    >
-        <div className="px-6 pb-4">
+    <div className="min-h-screen bg-[#ece7d9] text-black">
+      <div className="mx-auto max-w-5xl border-x-4 border-black">
+        <header className="border-b-4 border-black bg-[#b8ff4a] p-6">
+          <p className="text-xs font-black uppercase tracking-[0.2em]">Brutalist Auth / Roles</p>
+          <h1 className="mt-2 text-4xl font-black uppercase">Pick Your Side</h1>
           <p className="mt-2 text-sm font-semibold">No rounded fluff. Choose a track and continue.</p>
-        </div>
+        </header>
 
         <main className="grid gap-0 md:grid-cols-2">
           <button
@@ -35,11 +34,12 @@ const BrutalistRoles = () => {
         </main>
 
         <footer className="border-t-4 border-black bg-white p-4">
-          <BrutalistLinkButton href="/brutalist/login" tone="dark">
+          <Link href="/brutalist/login" className="border-4 border-black bg-black px-3 py-2 text-xs font-black uppercase text-white hover:bg-white hover:text-black">
             Back to Login
-          </BrutalistLinkButton>
+          </Link>
         </footer>
-    </BrutalistShell>
+      </div>
+    </div>
   );
 };
 
